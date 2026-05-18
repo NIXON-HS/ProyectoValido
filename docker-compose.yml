@@ -211,7 +211,7 @@ services:
     image: joomla:latest
     restart: always
     ports:
-      - "8083:80"
+      - "8085:80"
     environment:
       JOOMLA_DB_HOST: db-joomla-1:3306
       JOOMLA_DB_USER: root

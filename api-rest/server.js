@@ -78,9 +78,12 @@ app.post('/usuarios', verificarToken, async (req, res) => {
   const { id, nombre, email, rol } = req.body;
   const { data, error } = await supabase
     .from('usuarios')
-    .insert([{ id, nombre, email, rol }])
+    .upsert([{ id, nombre, email, rol }])
     .select();
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error('Error insertando usuario en Supabase:', error);
+    return res.status(500).json({ error: error.message });
+  }
   res.status(201).json(data[0]);
 });
 

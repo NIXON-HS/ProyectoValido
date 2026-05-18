@@ -53,8 +53,8 @@ Espera 2-3 minutos la primera vez (descarga imágenes). Luego accede a:
 | 🧾 Servicio SOAP | http://localhost:8000/wsdl?wsdl | Facturación electrónica |
 | 📰 WordPress 1 | http://localhost:8081 | Portal informativo (Principal) |
 | 📰 WordPress 2 | http://localhost:8082 | Portal informativo (Respaldo) |
-| 📰 Joomla 1 | http://localhost:8083 | Portal informativo (Principal) |
-| 📰 Joomla 2 | http://localhost:8084 | Portal informativo (Respaldo) |
+| 📰 Joomla 1 | http://localhost:8085 | Portal informativo (Principal) |
+| 📰 Joomla 2 | http://localhost:8086 | Portal informativo (Respaldo) |
 | 🔄 Portal Failover | http://localhost | NGINX simulando Keepalived |
 | 🔗 Debezium Connect | http://localhost:8083 | Panel de conectores CDC |
 
