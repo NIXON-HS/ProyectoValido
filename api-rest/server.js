@@ -5,7 +5,7 @@ const admin = require('firebase-admin');
 const { createClient } = require('@supabase/supabase-js');
 const twilio = require('twilio');
 const { Resend } = require('resend');
-const soap = require('node-soap');
+const soap = require('soap');
 
 const app = express();
 const port = process.env.PORT || 3000;
