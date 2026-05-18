@@ -13,6 +13,7 @@ node_modules/
 .env.development.local
 .env.test.local
 .env.production.local
+# .env.example NO se ignora para que el equipo sepa qué variables configurar
 *.pem
 *firebase-adminsdk*.json
 serviceAccountKey.json
