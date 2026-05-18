@@ -3,7 +3,7 @@ const soap = require('soap');
 const fs = require('fs');
 const app = express();
 
-const port = 8000;
+const port = process.env.PORT || 8000;
 
 // Health check
 app.get('/health', (req, res) => {
