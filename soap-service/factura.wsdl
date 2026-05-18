@@ -1,0 +1,42 @@
+<definitions name="FacturaService"
+  targetNamespace="http://www.techstore.com/wsdl/FacturaService.wsdl"
+  xmlns="http://schemas.xmlsoap.org/wsdl/"
+  xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+  xmlns:tns="http://www.techstore.com/wsdl/FacturaService.wsdl"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+
+  <message name="ValidarFacturaRequest">
+    <part name="xmlFactura" type="xsd:string"/>
+  </message>
+  <message name="ValidarFacturaResponse">
+    <part name="Estado" type="xsd:string"/>
+    <part name="Mensaje" type="xsd:string"/>
+    <part name="ClaveAcceso" type="xsd:string"/>
+  </message>
+
+  <portType name="FacturaPortType">
+    <operation name="ValidarFactura">
+      <input message="tns:ValidarFacturaRequest"/>
+      <output message="tns:ValidarFacturaResponse"/>
+    </operation>
+  </portType>
+
+  <binding name="FacturaBinding" type="tns:FacturaPortType">
+    <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <operation name="ValidarFactura">
+      <soap:operation soapAction="ValidarFactura"/>
+      <input>
+        <soap:body use="literal"/>
+      </input>
+      <output>
+        <soap:body use="literal"/>
+      </output>
+    </operation>
+  </binding>
+
+  <service name="FacturaService">
+    <port name="FacturaPort" binding="tns:FacturaBinding">
+      <soap:address location="http://localhost:8000/wsdl"/>
+    </port>
+  </service>
+</definitions>

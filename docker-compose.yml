@@ -1,0 +1,204 @@
+version: '3.8'
+
+services:
+  # ==========================================
+  # 1. KAFKA & DEBEZIUM (REPLICACIÓN DE DATOS)
+  # ==========================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  debezium:
+    image: debezium/connect:2.4
+    depends_on:
+      - kafka
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: my_connect_configs
+      OFFSET_STORAGE_TOPIC: my_connect_offsets
+      STATUS_STORAGE_TOPIC: my_connect_statuses
+
+  # ==========================================
+  # 2. APIs REST (BACKEND)
+  # ==========================================
+  api-rest-1:
+    build: ./api-rest
+    ports:
+      - "3001:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_KEY=${SUPABASE_KEY:-}
+
+  api-rest-2:
+    build: ./api-rest
+    ports:
+      - "3002:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=development
+      - SUPABASE_URL=${SUPABASE_URL:-}
+      - SUPABASE_KEY=${SUPABASE_KEY:-}
+
+  # ==========================================
+  # 3. BALANCEADOR DE CARGA (API REST)
+  # ==========================================
+  nginx-api-balancer:
+    image: nginx:alpine
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/api_balancer.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - api-rest-1
+      - api-rest-2
+
+  # ==========================================
+  # 4. SERVICIO SOAP (FACTURACIÓN)
+  # ==========================================
+  soap-service:
+    build: ./soap-service
+    ports:
+      - "8000:8000"
+
+  # ==========================================
+  # 5. PORTALES INFORMATIVOS (WORDPRESS)
+  # ==========================================
+  db-wp-1:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress
+    volumes:
+      - wp1_data:/var/lib/mysql
+
+  wordpress-1:
+    image: wordpress:latest
+    ports:
+      - "8081:80"
+    environment:
+      WORDPRESS_DB_HOST: db-wp-1:3306
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: root
+      WORDPRESS_DB_NAME: wordpress
+    depends_on:
+      - db-wp-1
+
+  db-wp-2:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: wordpress
+    volumes:
+      - wp2_data:/var/lib/mysql
+
+  wordpress-2:
+    image: wordpress:latest
+    ports:
+      - "8082:80"
+    environment:
+      WORDPRESS_DB_HOST: db-wp-2:3306
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: root
+      WORDPRESS_DB_NAME: wordpress
+    depends_on:
+      - db-wp-2
+
+  # ==========================================
+  # 6. PORTALES INFORMATIVOS (JOOMLA)
+  # ==========================================
+  db-joomla-1:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: joomla
+    volumes:
+      - joomla1_data:/var/lib/mysql
+
+  joomla-1:
+    image: joomla:latest
+    ports:
+      - "8083:80"
+    environment:
+      JOOMLA_DB_HOST: db-joomla-1:3306
+      JOOMLA_DB_USER: root
+      JOOMLA_DB_PASSWORD: root
+      JOOMLA_DB_NAME: joomla
+    depends_on:
+      - db-joomla-1
+
+  db-joomla-2:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: joomla
+    volumes:
+      - joomla2_data:/var/lib/mysql
+
+  joomla-2:
+    image: joomla:latest
+    ports:
+      - "8084:80"
+    environment:
+      JOOMLA_DB_HOST: db-joomla-2:3306
+      JOOMLA_DB_USER: root
+      JOOMLA_DB_PASSWORD: root
+      JOOMLA_DB_NAME: joomla
+    depends_on:
+      - db-joomla-2
+
+  # ==========================================
+  # 7. FAILOVER LOCAL (NGINX simulando Keepalived)
+  # ==========================================
+  nginx-failover:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/portal_failover.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - wordpress-1
+      - wordpress-2
+      - joomla-1
+      - joomla-2
+
+  # ==========================================
+  # 8. CLIENTE WEB (REACT)
+  # ==========================================
+  web-client:
+    build: ./web-client
+    ports:
+      - "3000:3000"
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./web-client/src:/app/src
+      - ./web-client/public:/app/public
+
+volumes:
+  wp1_data:
+  wp2_data:
+  joomla1_data:
+  joomla2_data:
