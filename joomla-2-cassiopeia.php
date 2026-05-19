@@ -979,7 +979,7 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
             }
 
             var localUrl = "http://localhost:8080/productos";
-            var cloudUrl = "https://api-rest-render-1.onrender.com/productos";
+            var cloudUrl = "https://nginx-balancer.onrender.com/productos";
 
             function cargarProductos(url, fallbackUrl) {
                 fetch(url)
