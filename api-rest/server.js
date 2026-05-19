@@ -218,7 +218,7 @@ app.post('/compras', verificarToken, async (req, res) => {
       await axios.post(
         'https://api.brevo.com/v3/smtp/email',
         {
-          sender: { name: 'TechStore 360', email: 'facturacion@techstore360.com' },
+          sender: { name: 'TechStore 360', email: process.env.BREVO_SENDER_EMAIL || 'facturacion@techstore360.com' },
           to: [{ email: email_cliente }],
           subject: `Factura de compra - ${claveAcceso || idCompra}`,
           htmlContent: `
