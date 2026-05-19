@@ -6,7 +6,7 @@ export default function Productos() {
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState({ nombre: '', descripcion: '', precio: '', stock: '' });
+  const [form, setForm] = useState({ id: null, nombre: '', descripcion: '', precio: '', stock: '' });
 
   async function fetchProductos() {
     try {
@@ -32,10 +32,34 @@ export default function Productos() {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    await api.post('/productos', form);
-    setShowModal(false);
-    setForm({ nombre: '', descripcion: '', precio: '', stock: '' });
-    fetchProductos();
+    try {
+      if (form.id) {
+        await api.put(`/productos/${form.id}`, form);
+      } else {
+        await api.post('/productos', form);
+      }
+      setShowModal(false);
+      setForm({ id: null, nombre: '', descripcion: '', precio: '', stock: '' });
+      fetchProductos();
+    } catch (error) {
+      alert('Error al guardar el producto: ' + (error.response?.data?.error || error.message));
+    }
+  }
+
+  function handleEdit(producto) {
+    setForm({
+      id: producto.id,
+      nombre: producto.nombre,
+      descripcion: producto.descripcion,
+      precio: producto.precio,
+      stock: producto.stock
+    });
+    setShowModal(true);
+  }
+
+  function handleNew() {
+    setForm({ id: null, nombre: '', descripcion: '', precio: '', stock: '' });
+    setShowModal(true);
   }
 
   if (loading) return <div className="text-slate-400">Cargando productos...</div>;
@@ -44,7 +68,7 @@ export default function Productos() {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-bold">Gestión de Productos</h2>
-        <button onClick={() => setShowModal(true)} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
+        <button onClick={handleNew} className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 transition-colors">
           <Plus size={20} /> Nuevo Producto
         </button>
       </div>
@@ -64,7 +88,7 @@ export default function Productos() {
               <div className="flex justify-between items-center mt-4">
                 <span className="text-xs bg-slate-700 px-2 py-1 rounded text-slate-300">Stock: {p.stock}</span>
                 <div className="flex gap-2">
-                  <button className="text-slate-400 hover:text-blue-400 transition-colors"><Edit2 size={18} /></button>
+                  <button onClick={() => handleEdit(p)} className="text-slate-400 hover:text-blue-400 transition-colors"><Edit2 size={18} /></button>
                   <button onClick={() => handleDelete(p.id)} className="text-slate-400 hover:text-red-400 transition-colors"><Trash2 size={18} /></button>
                 </div>
               </div>
@@ -77,7 +101,7 @@ export default function Productos() {
       {showModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 w-full max-w-md shadow-2xl">
-            <h3 className="text-xl font-bold mb-6">Crear Nuevo Producto</h3>
+            <h3 className="text-xl font-bold mb-6">{form.id ? 'Editar Producto' : 'Crear Nuevo Producto'}</h3>
             <form onSubmit={handleSubmit} className="space-y-4">
               <input required value={form.nombre} onChange={e => setForm({...form, nombre: e.target.value})} placeholder="Nombre del producto" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none" />
               <textarea required value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})} placeholder="Descripción" className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none h-24" />
