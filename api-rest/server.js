@@ -199,9 +199,10 @@ app.post('/compras', verificarToken, async (req, res) => {
     console.error('Error al llamar SOAP:', soapErr.message);
   }
 
-  // 3. Enviar SMS con Twilio
+  // 3. Enviar SMS y WhatsApp con Twilio
   const telefonoDestino = telefono_cliente || process.env.TWILIO_TO_TEST || '+593967318298';
   if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
+    // 3.1 Enviar SMS
     try {
       await twilioClient.messages.create({
         body: `TechStore 360: Tu compra fue registrada. Factura: ${claveAcceso || 'PROCESANDO'}`,
@@ -210,7 +211,20 @@ app.post('/compras', verificarToken, async (req, res) => {
       });
       console.log(`✉️ SMS enviado exitosamente a ${telefonoDestino}`);
     } catch (smsErr) {
-      console.error('Error Twilio:', smsErr.message);
+      console.error('Error Twilio SMS:', smsErr.message);
+    }
+
+    // 3.2 Enviar WhatsApp (Twilio Sandbox por defecto)
+    try {
+      const whatsappFrom = process.env.TWILIO_WHATSAPP_FROM || 'whatsapp:+14155238886';
+      await twilioClient.messages.create({
+        body: `*TechStore 360*\n\n¡Hola! Tu compra ha sido registrada exitosamente.\n\n*Factura:* ${claveAcceso || 'PROCESANDO'}\n*Total:* $${total}\n*Estado:* VALIDADA`,
+        from: whatsappFrom,
+        to: `whatsapp:${telefonoDestino}`,
+      });
+      console.log(`💬 WhatsApp enviado exitosamente a ${telefonoDestino}`);
+    } catch (waErr) {
+      console.error('Error Twilio WhatsApp:', waErr.message);
     }
   }
 
