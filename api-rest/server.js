@@ -186,6 +186,7 @@ app.post('/compras', verificarToken, async (req, res) => {
     const soapUrl = baseSoapUrl.endsWith('?wsdl') ? baseSoapUrl : `${baseSoapUrl}?wsdl`;
     const xmlFactura = `<Factura><IdCompra>${idCompra}</IdCompra><Total>${total}</Total></Factura>`;
     const client = await soap.createClientAsync(soapUrl);
+    client.setEndpoint(baseSoapUrl);
     const [soapResult] = await client.GenerarFacturaXMLAsync({ idCompra: idCompra.toString() });
     claveAcceso = soapResult?.ClaveAcceso || null;
 
