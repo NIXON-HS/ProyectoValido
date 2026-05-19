@@ -182,7 +182,8 @@ app.post('/compras', verificarToken, async (req, res) => {
   // 2. Llamar al servicio SOAP para generar factura
   let claveAcceso = null;
   try {
-    const soapUrl = `${process.env.SOAP_URL || 'http://soap-service:8000'}/wsdl?wsdl`;
+    const baseSoapUrl = process.env.SOAP_URL || 'http://soap-service:8000/wsdl';
+    const soapUrl = baseSoapUrl.endsWith('?wsdl') ? baseSoapUrl : `${baseSoapUrl}?wsdl`;
     const xmlFactura = `<Factura><IdCompra>${idCompra}</IdCompra><Total>${total}</Total></Factura>`;
     const client = await soap.createClientAsync(soapUrl);
     const [soapResult] = await client.GenerarFacturaXMLAsync({ idCompra: idCompra.toString() });
