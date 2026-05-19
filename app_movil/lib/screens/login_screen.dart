@@ -17,6 +17,24 @@ class _LoginScreenState extends State<LoginScreen> {
   bool isRegistering = false;
   bool isLoading = false;
 
+  /// Verifica que el usuario sea 'cliente'. Si es 'admin', lo desloguea.
+  Future<bool> _checkRoleMobile(User user) async {
+    final data = await ApiService.getUser(user.uid);
+    if (data != null && data['rol'] == 'admin') {
+      await FirebaseAuth.instance.signOut();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('⛔ Los administradores deben usar el Panel Web.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return false;
+    }
+    return true;
+  }
+
   Future<void> submit() async {
     setState(() => isLoading = true);
     try {
@@ -27,10 +45,13 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         await ApiService.syncUser(cred.user!, _nombreCtrl.text.trim().isNotEmpty ? _nombreCtrl.text.trim() : 'Cliente');
       } else {
-        await FirebaseAuth.instance.signInWithEmailAndPassword(
+        final cred = await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailCtrl.text.trim(),
           password: _passCtrl.text.trim(),
         );
+        // Bloquear admins en la app móvil
+        final allowed = await _checkRoleMobile(cred.user!);
+        if (!allowed) return;
       }
       if (mounted) {
         Navigator.pushReplacement(
@@ -82,6 +103,10 @@ class _LoginScreenState extends State<LoginScreen> {
         userCredential.user!,
         userCredential.user!.displayName ?? 'Usuario Google',
       );
+
+      // Bloquear admins en la app móvil
+      final allowed = await _checkRoleMobile(userCredential.user!);
+      if (!allowed) return;
 
       if (mounted) {
         Navigator.pushReplacement(

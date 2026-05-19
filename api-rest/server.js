@@ -74,6 +74,17 @@ app.get('/usuarios', verificarToken, async (req, res) => {
   res.json(data);
 });
 
+app.get('/usuarios/:id', verificarToken, async (req, res) => {
+  const { id } = req.params;
+  const { data, error } = await supabase
+    .from('usuarios')
+    .select('*')
+    .eq('id', id)
+    .single();
+  if (error) return res.status(404).json({ error: 'Usuario no encontrado' });
+  res.json(data);
+});
+
 app.post('/usuarios', verificarToken, async (req, res) => {
   const { id, nombre, email, rol } = req.body;
   const { data, error } = await supabase

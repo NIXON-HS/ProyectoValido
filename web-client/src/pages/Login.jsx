@@ -20,11 +20,27 @@ export default function Login() {
         id: user.uid,
         email: user.email,
         nombre: displayName || user.displayName || 'Usuario Nuevo',
-        rol: 'cliente'
+        rol: 'admin'  // El panel web es para administradores
       });
     } catch (e) {
       console.error('Error al sincronizar con el backend', e.response?.data || e.message);
     }
+  }
+
+  async function checkRoleWeb(user) {
+    try {
+      const res = await api.get(`/usuarios/${user.uid}`);
+      if (res.data?.rol === 'cliente') {
+        // Importamos auth de Firebase para hacer logout
+        const { getAuth, signOut } = await import('firebase/auth');
+        await signOut(getAuth());
+        setError('⛔ Los clientes deben usar la App Móvil.');
+        return false;
+      }
+    } catch (e) {
+      // Si no existe en la BD aún (usuario nuevo), no bloqueamos
+    }
+    return true;
   }
 
   async function handleSubmit(e) {
@@ -36,7 +52,9 @@ export default function Login() {
         const credential = await signup(email, password);
         await syncUserWithBackend(credential.user, nombre);
       } else {
-        await login(email, password);
+        const credential = await login(email, password);
+        const allowed = await checkRoleWeb(credential.user);
+        if (!allowed) return;
       }
       navigate('/');
     } catch (err) {
@@ -53,6 +71,8 @@ export default function Login() {
       const credential = await loginWithGoogle();
       // En caso de que sea usuario nuevo, intentamos sincronizar
       await syncUserWithBackend(credential.user, credential.user.displayName);
+      const allowed = await checkRoleWeb(credential.user);
+      if (!allowed) return;
       navigate('/');
     } catch (err) {
       setError('Error al iniciar sesión con Google.');

@@ -3,11 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:firebase_auth/firebase_auth.dart';
 
 class ApiService {
-  // Apuntando a la API en Render (Balanceador NGINX - cambiar cuando esté listo)
-  // Instancias disponibles:
-  //   https://api-rest-render-1.onrender.com
-  //   https://api-rest-render-2.onrender.com
-  static const String baseUrl = 'https://api-rest-render-1.onrender.com';
+  // ✅ Balanceador de carga NGINX (Fase 7) - distribuye entre api-rest-1 y api-rest-2
+  static const String baseUrl = 'https://nginx-balancer.onrender.com';
 
   static Future<Map<String, String>> _getHeaders() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -19,6 +16,20 @@ class ApiService {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
+  }
+
+  static Future<Map<String, dynamic>?> getUser(String uid) async {
+    try {
+      final headers = await _getHeaders();
+      final response = await http.get(
+        Uri.parse('$baseUrl/usuarios/$uid'),
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (_) {}
+    return null;
   }
 
   static Future<List<dynamic>> getProducts() async {
