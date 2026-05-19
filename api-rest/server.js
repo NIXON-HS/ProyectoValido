@@ -51,7 +51,7 @@ const ALERT_COOLDOWN = 1000 * 60 * 5; // Cooldown de 5 minutos
 // Helper: Alerta de Alta Carga
 async function enviarAlertaAltaCarga(reqSec) {
   if (!process.env.BREVO_API_KEY) return;
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.BREVO_SENDER_EMAIL || 'nixon2000paul@gmail.com';
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.BREVO_SENDER_EMAIL;
   try {
     await axios.post(
       'https://api.brevo.com/v3/smtp/email',
@@ -86,8 +86,8 @@ async function enviarAlertaAltaCarga(reqSec) {
 
 // Helper: Alerta de Fallo en SOAP
 async function enviarAlertaFalloSOAP(idCompra, errorMsg) {
-  const adminPhone = process.env.ADMIN_PHONE || '+593967318298';
-  const adminEmail = process.env.ADMIN_EMAIL || process.env.BREVO_SENDER_EMAIL || 'nixon2000paul@gmail.com';
+  const adminPhone = process.env.ADMIN_PHONE;
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.BREVO_SENDER_EMAIL;
 
   // 1. SMS de alerta
   if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
@@ -190,7 +190,7 @@ app.get('/health', async (req, res) => {
     console.error('🚨 SISTEMA CAÍDO / ERROR DB:', err.message);
     
     // Enviar SMS de alerta al administrador
-    const adminPhone = process.env.ADMIN_PHONE || '+593967318298';
+    const adminPhone = process.env.ADMIN_PHONE;
     if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
       try {
         await twilioClient.messages.create({
@@ -349,7 +349,7 @@ app.post('/compras', verificarToken, async (req, res) => {
   }
 
   // 3. Enviar SMS y WhatsApp con Twilio
-  const telefonoDestino = telefono_cliente || process.env.TWILIO_TO_TEST || '+593967318298';
+  const telefonoDestino = telefono_cliente || process.env.TWILIO_TO_TEST;
   if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
     // 3.1 Enviar SMS
     try {
