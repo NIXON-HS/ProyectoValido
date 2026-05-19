@@ -222,10 +222,68 @@ app.post('/compras', verificarToken, async (req, res) => {
           to: [{ email: email_cliente }],
           subject: `Factura de compra - ${claveAcceso || idCompra}`,
           htmlContent: `
-            <h2>Gracias por tu compra en TechStore 360</h2>
-            <p><strong>Clave de Acceso:</strong> ${claveAcceso || 'En proceso'}</p>
-            <p><strong>Total:</strong> $${total}</p>
-            <p><strong>Estado:</strong> VALIDADA</p>
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+              <meta charset="UTF-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <style>
+                body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; margin: 0; padding: 0; }
+                .container { max-width: 600px; margin: 40px auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+                .header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); padding: 30px 20px; text-align: center; color: #ffffff; }
+                .header h1 { margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 1px; }
+                .content { padding: 40px 30px; color: #334155; }
+                .greeting { font-size: 18px; margin-bottom: 20px; }
+                .receipt-box { background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin-bottom: 30px; }
+                .receipt-row { display: flex; justify-content: space-between; border-bottom: 1px solid #e2e8f0; padding: 12px 0; font-size: 15px; }
+                .receipt-row:last-child { border-bottom: none; font-weight: bold; font-size: 18px; color: #0f172a; padding-bottom: 0; }
+                .label { color: #64748b; font-weight: 500; }
+                .value { color: #0f172a; font-weight: 600; text-align: right; }
+                .status-badge { background-color: #10b981; color: white; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; display: inline-block; }
+                .footer { background-color: #f1f5f9; padding: 20px; text-align: center; font-size: 13px; color: #64748b; }
+                .footer p { margin: 5px 0; }
+                .btn { display: inline-block; background-color: #3b82f6; color: white; text-decoration: none; padding: 12px 25px; border-radius: 6px; font-weight: 600; margin-top: 10px; }
+              </style>
+            </head>
+            <body>
+              <div class="container">
+                <div class="header">
+                  <h1>TECHSTORE 360</h1>
+                </div>
+                <div class="content">
+                  <div class="greeting">¡Hola! Gracias por tu compra.</div>
+                  <p>Hemos procesado exitosamente tu pago y tu factura electrónica ha sido validada. Aquí tienes los detalles de tu transacción:</p>
+                  
+                  <div class="receipt-box">
+                    <div class="receipt-row">
+                      <span class="label">N° de Comprobante</span>
+                      <span class="value">${claveAcceso || idCompra}</span>
+                    </div>
+                    <div class="receipt-row">
+                      <span class="label">Fecha</span>
+                      <span class="value">${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
+                    </div>
+                    <div class="receipt-row">
+                      <span class="label">Estado de Factura</span>
+                      <span class="value"><span class="status-badge">VALIDADA</span></span>
+                    </div>
+                    <div class="receipt-row" style="margin-top: 10px; border-top: 2px dashed #cbd5e1; padding-top: 15px;">
+                      <span class="label" style="color: #0f172a;">Total Pagado</span>
+                      <span class="value" style="color: #10b981;">$${total}</span>
+                    </div>
+                  </div>
+                  
+                  <p style="text-align: center; margin-top: 30px;">
+                    <a href="#" class="btn">Ver en la aplicación</a>
+                  </p>
+                </div>
+                <div class="footer">
+                  <p>Este es un correo automático, por favor no respondas a esta dirección.</p>
+                  <p>&copy; ${new Date().getFullYear()} TechStore 360. Todos los derechos reservados.</p>
+                </div>
+              </div>
+            </body>
+            </html>
           `
         },
         {
