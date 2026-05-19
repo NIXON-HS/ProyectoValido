@@ -6,6 +6,15 @@ Version: 1.0
 Author: Antigravity
 */
 
+// Sobrescribir variables de servidor para compatibilidad con subruta de proxy inverso (/wordpress)
+if (isset($_SERVER['HTTP_X_REAL_IP']) || (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'localhost' && !in_array($_SERVER['SERVER_PORT'], ['8081', '8082']))) {
+    if (strpos($_SERVER['REQUEST_URI'], '/wordpress') !== 0) {
+        $_SERVER['REQUEST_URI'] = '/wordpress' . $_SERVER['REQUEST_URI'];
+        $_SERVER['SCRIPT_NAME'] = '/wordpress' . $_SERVER['SCRIPT_NAME'];
+        $_SERVER['PHP_SELF']    = '/wordpress' . $_SERVER['PHP_SELF'];
+    }
+}
+
 if (!defined('ABSPATH')) exit;
 
 function wp_diff_badge_servidor() {

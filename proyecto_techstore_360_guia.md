@@ -294,10 +294,81 @@ Simularemos un entorno IaaS local (pueden ser máquinas virtuales en VirtualBox/
 1. Instala exactamente el mismo stack y haz una copia de los archivos y la base de datos del Servidor 1 hacia el Servidor 2.
 
 ### 6.3 Configurar Failover Local (Keepalived + Nginx)
-1. Asigna una IP Virtual (VIP) que será compartida entre el Servidor 1 y Servidor 2.
+1. Asigna una IP Virtual (VIP) que será compartida entre el Servidor 1 y Servidor 2 (ej: `192.168.1.100`).
 2. En ambos servidores, instala Keepalived: `sudo apt install keepalived`.
 3. Configura `keepalived.conf` en el **Servidor 1** como `MASTER` y en el **Servidor 2** como `BACKUP`.
+
+#### Configuración para Servidor 1 (MASTER) - `/etc/keepalived/keepalived.conf`
+```conf
+global_defs {
+    router_id nginx_master
+}
+
+# Monitorea si Nginx está corriendo
+vrrp_script check_nginx {
+    script "/usr/bin/killall -0 nginx"
+    interval 2
+    weight 2
+}
+
+vrrp_instance VI_1 {
+    state MASTER
+    interface eth0          # Interfaz de red del servidor
+    virtual_router_id 51
+    priority 101            # Mayor prioridad para MASTER
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 12345
+    }
+    virtual_ipaddress {
+        192.168.1.100       # IP Virtual (VIP) compartida
+    }
+    track_script {
+        check_nginx
+    }
+}
+```
+
+#### Configuración para Servidor 2 (BACKUP) - `/etc/keepalived/keepalived.conf`
+```conf
+global_defs {
+    router_id nginx_backup
+}
+
+vrrp_script check_nginx {
+    script "/usr/bin/killall -0 nginx"
+    interval 2
+    weight 2
+}
+
+vrrp_instance VI_1 {
+    state BACKUP
+    interface eth0          # Interfaz de red del servidor
+    virtual_router_id 51
+    priority 100            # Menor prioridad para BACKUP
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass 12345
+    }
+    virtual_ipaddress {
+        192.168.1.100       # IP Virtual (VIP) compartida
+    }
+    track_script {
+        check_nginx
+    }
+}
+```
+
 4. Cuando el Servidor 1 caiga, la IP Virtual pasará automáticamente al Servidor 2 y los usuarios no perderán acceso a los portales.
+5. **Simulación en Docker (Entorno de Desarrollo):** Debido a que Docker en Windows/Mac no soporta de forma nativa el protocolo VRRP a nivel de red, este comportamiento se simula en el contenedor `nginx-failover` utilizando la directiva `backup` de Nginx:
+   ```nginx
+   upstream wordpress_backend {
+       server wordpress-1:80;
+       server wordpress-2:80 backup; # Si cae el server 1, Nginx conmuta automáticamente
+   }
+   ```
 
 ---
 
