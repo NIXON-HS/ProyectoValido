@@ -1,5 +1,6 @@
 const { createClient } = require('@supabase/supabase-js');
 const { Client } = require('pg');
+const { MongoClient } = require('mongodb');
 const fs = require('fs');
 
 // Leer .env
@@ -19,10 +20,17 @@ const pgClient = new Client({
   ssl: { rejectUnauthorized: false }
 });
 
+const mongoClient = new MongoClient(env.MONGODB_URI);
+
 async function startReplicator() {
-  console.log("Iniciando Replicador CDC (Supabase Realtime -> Aiven PostgreSQL)...");
+  console.log("Iniciando Replicador CDC (Supabase Realtime -> Aiven PG & MongoDB)...");
   await pgClient.connect();
   console.log("Conectado a Aiven PostgreSQL exitosamente.");
+  
+  await mongoClient.connect();
+  console.log("Conectado a MongoDB Atlas exitosamente.");
+  const mongoDb = mongoClient.db(); // Usa la base de datos por defecto del URI
+  const comprasCollection = mongoDb.collection('compras');
 
   // Asegurar que las tablas existan en Aiven
   await pgClient.query(`
@@ -82,6 +90,8 @@ async function startReplicator() {
         if (payload.table === 'compras') {
           if (payload.eventType === 'INSERT' || payload.eventType === 'UPDATE') {
             const { id, usuario_id, producto_id, cantidad, total, estado_factura, fecha } = payload.new;
+            
+            // Replicar a Aiven (Completa)
             await pgClient.query(
               `INSERT INTO compras (id, usuario_id, producto_id, cantidad, total, estado_factura, fecha) 
                VALUES ($1, $2, $3, $4, $5, $6, $7) 
@@ -89,8 +99,18 @@ async function startReplicator() {
                SET usuario_id=$2, producto_id=$3, cantidad=$4, total=$5, estado_factura=$6, fecha=$7`,
               [id, usuario_id, producto_id, cantidad, total, estado_factura, fecha]
             );
+
+            // Replicar a MongoDB (Parcial/Completa según configuración)
+            await comprasCollection.updateOne(
+              { _id: id }, // Usamos el ID de la compra como _id de Mongo
+              { $set: { usuario_id, producto_id, cantidad, total, estado_factura, fecha } },
+              { upsert: true }
+            );
+            console.log(`[MongoDB] Compra ${id} sincronizada.`);
           } else if (payload.eventType === 'DELETE') {
             await pgClient.query('DELETE FROM compras WHERE id = $1', [payload.old.id]);
+            await comprasCollection.deleteOne({ _id: payload.old.id });
+            console.log(`[MongoDB] Compra ${payload.old.id} eliminada.`);
           }
         }
       } catch (err) {
