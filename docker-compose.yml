@@ -138,6 +138,7 @@ services:
       MYSQL_DATABASE: wordpress
     volumes:
       - wp1_data:/var/lib/mysql
+      - ./db-dumps/wordpress-1.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
@@ -156,6 +157,7 @@ services:
       WORDPRESS_DB_NAME: wordpress
     volumes:
       - wp1_files:/var/www/html
+      - ./wordpress-1-mu:/var/www/html/wp-content/mu-plugins
     depends_on:
       db-wp-1:
         condition: service_healthy
@@ -168,6 +170,7 @@ services:
       MYSQL_DATABASE: wordpress
     volumes:
       - wp2_data:/var/lib/mysql
+      - ./db-dumps/wordpress-2.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
@@ -186,6 +189,7 @@ services:
       WORDPRESS_DB_NAME: wordpress
     volumes:
       - wp2_files:/var/www/html
+      - ./wordpress-2-mu:/var/www/html/wp-content/mu-plugins
     depends_on:
       db-wp-2:
         condition: service_healthy
@@ -201,6 +205,7 @@ services:
       MYSQL_DATABASE: joomla
     volumes:
       - joomla1_data:/var/lib/mysql
+      - ./db-dumps/joomla-1.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
@@ -219,6 +224,8 @@ services:
       JOOMLA_DB_NAME: joomla
     volumes:
       - joomla1_files:/var/www/html
+      - ./joomla-1-cassiopeia.php:/var/www/html/templates/cassiopeia/index.php
+      - ./joomla-1-atum.php:/var/www/html/administrator/templates/atum/index.php
     depends_on:
       db-joomla-1:
         condition: service_healthy
@@ -231,6 +238,7 @@ services:
       MYSQL_DATABASE: joomla
     volumes:
       - joomla2_data:/var/lib/mysql
+      - ./db-dumps/joomla-2.sql:/docker-entrypoint-initdb.d/init.sql:ro
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-proot"]
       interval: 10s
@@ -249,6 +257,8 @@ services:
       JOOMLA_DB_NAME: joomla
     volumes:
       - joomla2_files:/var/www/html
+      - ./joomla-2-cassiopeia.php:/var/www/html/templates/cassiopeia/index.php
+      - ./joomla-2-atum.php:/var/www/html/administrator/templates/atum/index.php
     depends_on:
       db-joomla-2:
         condition: service_healthy
