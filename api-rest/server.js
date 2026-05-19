@@ -4,7 +4,7 @@ const cors = require('cors');
 const admin = require('firebase-admin');
 const { createClient } = require('@supabase/supabase-js');
 const twilio = require('twilio');
-const { Resend } = require('resend');
+const axios = require('axios');
 const soap = require('soap');
 
 const app = express();
@@ -35,10 +35,9 @@ if (!admin.apps.length) {
 }
 
 // ==========================================
-// TWILIO & RESEND
+// TWILIO
 // ==========================================
 const twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 // ==========================================
 // MIDDLEWARE: Verificar token JWT de Firebase
@@ -211,22 +210,32 @@ app.post('/compras', verificarToken, async (req, res) => {
     }
   }
 
-  // 4. Enviar correo con Resend/Brave Email
-  if (email_cliente && process.env.RESEND_API_KEY) {
+  // 4. Enviar correo con Brevo
+  if (email_cliente && process.env.BREVO_API_KEY) {
     try {
-      await resend.emails.send({
-        from: 'TechStore 360 <facturacion@techstore360.com>',
-        to: [email_cliente],
-        subject: `Factura de compra - ${claveAcceso || idCompra}`,
-        html: `
-          <h2>Gracias por tu compra en TechStore 360</h2>
-          <p><strong>Clave de Acceso:</strong> ${claveAcceso || 'En proceso'}</p>
-          <p><strong>Total:</strong> $${total}</p>
-          <p><strong>Estado:</strong> VALIDADA</p>
-        `,
-      });
+      await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { name: 'TechStore 360', email: 'facturacion@techstore360.com' },
+          to: [{ email: email_cliente }],
+          subject: `Factura de compra - ${claveAcceso || idCompra}`,
+          htmlContent: `
+            <h2>Gracias por tu compra en TechStore 360</h2>
+            <p><strong>Clave de Acceso:</strong> ${claveAcceso || 'En proceso'}</p>
+            <p><strong>Total:</strong> $${total}</p>
+            <p><strong>Estado:</strong> VALIDADA</p>
+          `
+        },
+        {
+          headers: {
+            'accept': 'application/json',
+            'api-key': process.env.BREVO_API_KEY,
+            'content-type': 'application/json'
+          }
+        }
+      );
     } catch (emailErr) {
-      console.error('Error Resend:', emailErr.message);
+      console.error('Error Brevo:', emailErr.response?.data || emailErr.message);
     }
   }
 
