@@ -200,13 +200,15 @@ app.post('/compras', verificarToken, async (req, res) => {
   }
 
   // 3. Enviar SMS con Twilio
-  if (telefono_cliente && process.env.TWILIO_SID) {
+  const telefonoDestino = telefono_cliente || process.env.TWILIO_TO_TEST || '+593961798049';
+  if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
     try {
       await twilioClient.messages.create({
         body: `TechStore 360: Tu compra fue registrada. Factura: ${claveAcceso || 'PROCESANDO'}`,
         from: process.env.TWILIO_PHONE,
-        to: telefono_cliente,
+        to: telefonoDestino,
       });
+      console.log(`✉️ SMS enviado exitosamente a ${telefonoDestino}`);
     } catch (smsErr) {
       console.error('Error Twilio:', smsErr.message);
     }
