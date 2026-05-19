@@ -132,6 +132,11 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
 <html lang="<?php echo $this->language; ?>" dir="<?php echo $this->direction; ?>">
 
 <head>
+    <?php 
+    // Ajustar base URL de Joomla para evitar redireccionamientos fuera de la subruta del proxy
+    $this->base = 'http://localhost/joomla/';
+    $this->baseurl = '/joomla';
+    ?>
     <jdoc:include type="metas" />
     <jdoc:include type="styles" />
     <jdoc:include type="scripts" />
@@ -751,14 +756,14 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
 <?php else : ?>
     <!-- Custom Replicated E-Commerce Portal Ecosistema Replicado -->
     <nav class="custom-navbar">
-        <a class="navbar-brand-custom" href="index.php">
+        <a class="navbar-brand-custom" href="/joomla/index.php">
             <span>⚡ TECHSTORE 360</span>
         </a>
         <ul class="navbar-links">
-            <li><a href="index.php" class="<?php echo $pageId === 0 ? 'active' : ''; ?>">Inicio</a></li>
-            <li><a href="?page_id=7" class="<?php echo $pageId === 7 ? 'active' : ''; ?>">Nosotros / UTA</a></li>
-            <li><a href="?page_id=8" class="<?php echo $pageId === 8 ? 'active' : ''; ?>">Catálogo</a></li>
-            <li><a href="?page_id=9" class="<?php echo $pageId === 9 ? 'active' : ''; ?>">Canales</a></li>
+            <li><a href="/joomla/index.php" class="<?php echo $pageId === 0 ? 'active' : ''; ?>">Inicio</a></li>
+            <li><a href="/joomla/?page_id=7" class="<?php echo $pageId === 7 ? 'active' : ''; ?>">Nosotros / UTA</a></li>
+            <li><a href="/joomla/?page_id=8" class="<?php echo $pageId === 8 ? 'active' : ''; ?>">Catálogo</a></li>
+            <li><a href="/joomla/?page_id=9" class="<?php echo $pageId === 9 ? 'active' : ''; ?>">Canales</a></li>
         </ul>
         <div class="navbar-status">
             <div class="status-dot"></div>
@@ -775,13 +780,13 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
                 <h1 class="hero-title">TECHSTORE 360</h1>
                 <p class="hero-subtitle">Portal Corporativo Informativo y Catálogo de Redundancia en Tiempo Real.</p>
                 <div class="hero-ctas">
-                    <a class="btn-primary-custom" href="?page_id=8">Explorar Catálogo</a>
-                    <a class="btn-secondary-custom" href="?page_id=7">Información UTA</a>
+                    <a class="btn-primary-custom" href="/joomla/?page_id=8">Explorar Catálogo</a>
+                    <a class="btn-secondary-custom" href="/joomla/?page_id=7">Información UTA</a>
                 </div>
             </section>
 
             <section class="features-grid">
-                <a class="feature-card" href="?page_id=7">
+                <a class="feature-card" href="/joomla/?page_id=7">
                     <div>
                         <div class="card-icon">🏛️</div>
                         <h3 class="card-title">Información Institucional</h3>
@@ -790,7 +795,7 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
                     <span class="card-link">Ver Detalles →</span>
                 </a>
 
-                <a class="feature-card" href="?page_id=8">
+                <a class="feature-card" href="/joomla/?page_id=8">
                     <div>
                         <div class="card-icon">🛍️</div>
                         <h3 class="card-title">Catálogo Informativo</h3>
@@ -799,7 +804,7 @@ $wa->getAsset('style', 'fontawesome')->setAttribute('rel', 'lazy-stylesheet');
                     <span class="card-link">Ir al Catálogo →</span>
                 </a>
 
-                <a class="feature-card" href="?page_id=9">
+                <a class="feature-card" href="/joomla/?page_id=9">
                     <div>
                         <div class="card-icon">🔗</div>
                         <h3 class="card-title">Enlaces del Sistema</h3>
