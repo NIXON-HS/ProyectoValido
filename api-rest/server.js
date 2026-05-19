@@ -40,6 +40,121 @@ if (!admin.apps.length) {
 const twilioClient = twilio(process.env.TWILIO_SID, process.env.TWILIO_TOKEN);
 
 // ==========================================
+// 🚨 MONITOREO Y ALERTAS DE SISTEMA (Fase 1.6)
+// ==========================================
+let requestCountThisSecond = 0;
+let lastResetTime = Date.now();
+let lastLoadAlertTime = 0;
+const LOAD_THRESHOLD = 30; // Más de 30 req/seg es considerado alta carga
+const ALERT_COOLDOWN = 1000 * 60 * 5; // Cooldown de 5 minutos
+
+// Helper: Alerta de Alta Carga
+async function enviarAlertaAltaCarga(reqSec) {
+  if (!process.env.BREVO_API_KEY) return;
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.BREVO_SENDER_EMAIL || 'nixon2000paul@gmail.com';
+  try {
+    await axios.post(
+      'https://api.brevo.com/v3/smtp/email',
+      {
+        sender: { name: 'Alerta TechStore 360', email: process.env.BREVO_SENDER_EMAIL || 'alerta@techstore360.com' },
+        to: [{ email: adminEmail }],
+        subject: `🚨 ALERTA: Alta Carga Detectada en API`,
+        htmlContent: `
+          <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #f5c6cb; background-color: #f8d7da; color: #721c24; border-radius: 5px;">
+            <h2 style="margin-top: 0;">🚨 Alerta de Rendimiento: Alta Carga</h2>
+            <p>Se ha detectado una tasa de peticiones inusualmente alta en el servidor API.</p>
+            <hr style="border-top: 1px solid #f5c6cb;">
+            <p><strong>Peticiones por segundo actuales:</strong> <span style="font-size: 18px; font-weight: bold;">${reqSec} req/seg</span></p>
+            <p><strong>Límite configurado:</strong> ${LOAD_THRESHOLD} req/seg</p>
+            <p><strong>Fecha y Hora:</strong> ${new Date().toISOString()}</p>
+          </div>
+        `
+      },
+      {
+        headers: {
+          'accept': 'application/json',
+          'api-key': process.env.BREVO_API_KEY,
+          'content-type': 'application/json'
+        }
+      }
+    );
+    console.log('🚨 Alerta de alta carga enviada por correo al administrador.');
+  } catch (err) {
+    console.error('Error enviando alerta de alta carga:', err.message);
+  }
+}
+
+// Helper: Alerta de Fallo en SOAP
+async function enviarAlertaFalloSOAP(idCompra, errorMsg) {
+  const adminPhone = process.env.ADMIN_PHONE || '+593967318298';
+  const adminEmail = process.env.ADMIN_EMAIL || process.env.BREVO_SENDER_EMAIL || 'nixon2000paul@gmail.com';
+
+  // 1. SMS de alerta
+  if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
+    try {
+      await twilioClient.messages.create({
+        body: `🚨 ALERTA TechStore 360: Fallo critico en SOAP de facturacion para compra #${idCompra}. Error: ${errorMsg.slice(0, 80)}`,
+        from: process.env.TWILIO_PHONE,
+        to: adminPhone,
+      });
+      console.log('🚨 SMS de alerta de fallo SOAP enviado.');
+    } catch (smsErr) {
+      console.error('Error enviando SMS de alerta SOAP:', smsErr.message);
+    }
+  }
+
+  // 2. Correo de alerta
+  if (process.env.BREVO_API_KEY) {
+    try {
+      await axios.post(
+        'https://api.brevo.com/v3/smtp/email',
+        {
+          sender: { name: 'Alerta TechStore 360', email: process.env.BREVO_SENDER_EMAIL || 'alerta@techstore360.com' },
+          to: [{ email: adminEmail }],
+          subject: `🚨 ALERTA: Fallo en Servicio SOAP de Facturación`,
+          htmlContent: `
+            <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ffeeba; background-color: #fff3cd; color: #856404; border-radius: 5px;">
+              <h2 style="margin-top: 0; color: #856404;">⚠️ Fallo de Comunicación con SOAP</h2>
+              <p>Se ha detectado un fallo al comunicarse con el microservicio SOAP de facturación.</p>
+              <hr style="border-top: 1px solid #ffeeba;">
+              <p><strong>ID de Compra afectado:</strong> #${idCompra}</p>
+              <p><strong>Detalle del error:</strong> ${errorMsg}</p>
+              <p><strong>Fecha y Hora:</strong> ${new Date().toISOString()}</p>
+            </div>
+          `
+        },
+        {
+          headers: {
+            'accept': 'application/json',
+            'api-key': process.env.BREVO_API_KEY,
+            'content-type': 'application/json'
+          }
+        }
+      );
+      console.log('🚨 Correo de alerta de fallo SOAP enviado.');
+    } catch (err) {
+      console.error('Error enviando correo de alerta SOAP:', err.message);
+    }
+  }
+}
+
+// Middleware para contar peticiones y detectar alta carga
+app.use((req, res, next) => {
+  const now = Date.now();
+  if (now - lastResetTime >= 1000) {
+    requestCountThisSecond = 0;
+    lastResetTime = now;
+  }
+  requestCountThisSecond++;
+
+  if (requestCountThisSecond > LOAD_THRESHOLD && (now - lastLoadAlertTime > ALERT_COOLDOWN)) {
+    lastLoadAlertTime = now;
+    enviarAlertaAltaCarga(requestCountThisSecond);
+  }
+  next();
+});
+
+// ==========================================
 // MIDDLEWARE: Verificar token JWT de Firebase
 // ==========================================
 const verificarToken = async (req, res, next) => {
@@ -58,10 +173,42 @@ const verificarToken = async (req, res, next) => {
 };
 
 // ==========================================
-// HEALTH CHECK (docker-compose lo requiere)
+// HEALTH CHECK (Monitorea Supabase y alerta caída)
 // ==========================================
-app.get('/health', (req, res) => {
-  res.json({ status: 'OK', server: process.env.HOSTNAME || 'api-rest' });
+app.get('/health', async (req, res) => {
+  try {
+    // Intentar consulta simple a Supabase para verificar estado de la base de datos
+    const { error } = await supabase.from('productos').select('id').limit(1);
+    if (error) throw error;
+
+    res.json({ 
+      status: 'OK', 
+      database: 'CONNECTED', 
+      server: process.env.HOSTNAME || 'api-rest' 
+    });
+  } catch (err) {
+    console.error('🚨 SISTEMA CAÍDO / ERROR DB:', err.message);
+    
+    // Enviar SMS de alerta al administrador
+    const adminPhone = process.env.ADMIN_PHONE || '+593967318298';
+    if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
+      try {
+        await twilioClient.messages.create({
+          body: `🚨 ALERTA TechStore 360: El sistema o la base de datos se encuentra CAIDO. Error: ${err.message.slice(0, 100)}`,
+          from: process.env.TWILIO_PHONE,
+          to: adminPhone,
+        });
+        console.log('🚨 SMS de alerta de caída enviado al administrador.');
+      } catch (smsErr) {
+        console.error('Error enviando SMS de caída:', smsErr.message);
+      }
+    }
+
+    res.status(500).json({ 
+      status: 'ERROR', 
+      message: 'Base de datos o servidor no disponible' 
+    });
+  }
 });
 
 // ==========================================
@@ -197,6 +344,8 @@ app.post('/compras', verificarToken, async (req, res) => {
       .eq('id', idCompra);
   } catch (soapErr) {
     console.error('Error al llamar SOAP:', soapErr.message);
+    // 🚨 Alerta al administrador sobre fallo en SOAP (SMS y Correo)
+    enviarAlertaFalloSOAP(idCompra, soapErr.message);
   }
 
   // 3. Enviar SMS y WhatsApp con Twilio
