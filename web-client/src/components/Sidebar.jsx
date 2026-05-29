@@ -7,12 +7,12 @@ import { Users, Package, ShoppingCart, LogOut } from 'lucide-react';
 function getLinkClass(isLight, isActive) {
   if (isActive) {
     return isLight
-      ? 'bg-sky-50 text-sky-700 border border-sky-200'
+      ? 'bg-sky-100 text-sky-800 border border-sky-200 shadow-sm shadow-sky-100/60'
       : 'bg-sky-500/10 text-sky-300 border border-sky-500/20';
   }
 
   return isLight
-    ? 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+    ? 'text-slate-700 hover:bg-sky-50 hover:text-slate-900'
     : 'text-slate-400 hover:bg-slate-800/60 hover:text-slate-100';
 }
 
@@ -27,9 +27,9 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className={`w-64 flex flex-col justify-between border-r ${isLight ? 'bg-white border-slate-200 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'}`}>
+    <div className={`w-64 flex flex-col justify-between border-r ${isLight ? 'bg-gradient-to-b from-sky-50 to-white border-sky-100 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'}`}>
       <div>
-        <div className={`p-6 border-b ${isLight ? 'border-slate-200' : 'border-slate-700'}`}>
+        <div className={`p-6 border-b ${isLight ? 'border-sky-100' : 'border-slate-700'}`}>
           <h1 className={`text-xl font-bold ${isLight ? 'text-sky-700' : 'text-sky-400'}`}>TechStore 360</h1>
         </div>
         <nav className="p-4 space-y-2">
@@ -45,7 +45,7 @@ export default function Sidebar() {
           ))}
         </nav>
       </div>
-      <div className={`p-4 border-t ${isLight ? 'border-slate-200' : 'border-slate-700'}`}>
+      <div className={`p-4 border-t ${isLight ? 'border-sky-100' : 'border-slate-700'}`}>
         <button
           onClick={() => logout()}
           className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all font-medium ${isLight ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/10'}`}

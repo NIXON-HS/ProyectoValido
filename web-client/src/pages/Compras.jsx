@@ -51,6 +51,7 @@ export default function Compras() {
 
   const shellClass = isLight ? 'text-slate-900' : 'text-slate-100';
   const surfaceClass = isLight ? 'bg-white border-slate-200' : 'bg-slate-800 border-slate-700';
+  const softCardClass = isLight ? 'bg-gradient-to-br from-white to-slate-50 border-slate-200' : 'bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700';
   const mutedClass = isLight ? 'text-slate-500' : 'text-slate-400';
   const inputClass = isLight
     ? 'bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-sky-500/30'
@@ -60,35 +61,38 @@ export default function Compras() {
 
   return (
     <div className={`space-y-6 ${shellClass}`}>
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-        <div>
-          <h2 className={`text-2xl font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>Historial de Compras</h2>
-          <p className={`mt-1 text-sm ${mutedClass}`}>{filteredCompras.length} compra(s) visible(s) de {compras.length} registradas</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-3 xl:w-[68%]">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Buscar por cliente o producto"
-            className={`rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-4 ${inputClass}`}
-          />
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(event) => setDateFrom(event.target.value)}
-            className={`rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-4 ${inputClass}`}
-          />
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(event) => setDateTo(event.target.value)}
-            className={`rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-4 ${inputClass}`}
-          />
+      <div className={`overflow-hidden rounded-[28px] border p-5 shadow-sm ${softCardClass}`}>
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p className={`text-xs uppercase tracking-[0.28em] ${mutedClass}`}>Historial</p>
+            <h2 className={`mt-2 text-2xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>Compras</h2>
+            <p className={`mt-1 text-sm ${mutedClass}`}>{filteredCompras.length} compra(s) visible(s) de {compras.length} registradas</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3 xl:w-[68%]">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Buscar por cliente o producto"
+              className={`rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-4 ${inputClass}`}
+            />
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(event) => setDateFrom(event.target.value)}
+              className={`rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-4 ${inputClass}`}
+            />
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(event) => setDateTo(event.target.value)}
+              className={`rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-4 ${inputClass}`}
+            />
+          </div>
         </div>
       </div>
 
-      <div className={`rounded-xl border overflow-hidden ${surfaceClass}`}>
+      <div className={`rounded-3xl border overflow-hidden shadow-sm ${surfaceClass}`}>
         <table className="w-full text-left">
           <thead className={`text-sm ${isLight ? 'bg-slate-50 text-slate-500' : 'bg-slate-900/50 text-slate-400'}`}>
             <tr>
@@ -110,7 +114,7 @@ export default function Compras() {
                 </td>
                 <td className="p-4">
                   <div className="flex items-center gap-2">
-                    <Package size={16} className="text-blue-400" />
+                    <Package size={16} className={isLight ? 'text-sky-500' : 'text-sky-300'} />
                     {c.productos?.nombre} x{c.cantidad}
                   </div>
                 </td>

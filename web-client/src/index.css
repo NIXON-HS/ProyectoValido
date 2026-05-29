@@ -5,23 +5,23 @@
 
 html {
   min-height: 100%;
-  --app-bg: #f8fafc;
+  --app-bg: #edf5ff;
   --app-fg: #0f172a;
-  --app-surface: rgba(255, 255, 255, 0.95);
-  --app-surface-strong: #ffffff;
-  --app-surface-soft: rgba(248, 250, 252, 0.96);
-  --app-border: rgba(148, 163, 184, 0.18);
-  --app-border-strong: rgba(148, 163, 184, 0.3);
+  --app-surface: rgba(255, 255, 255, 0.92);
+  --app-surface-strong: #f8fbff;
+  --app-surface-soft: rgba(232, 242, 255, 0.84);
+  --app-border: rgba(125, 167, 222, 0.26);
+  --app-border-strong: rgba(125, 167, 222, 0.4);
   --app-muted: #5b6472;
-  --app-accent: #2563eb;
-  --app-accent-soft: rgba(37, 99, 235, 0.14);
-  --app-success: #2563eb;
-  --app-warning: #1d4ed8;
+  --app-accent: #4f8ef7;
+  --app-accent-soft: rgba(79, 142, 247, 0.16);
+  --app-success: #3b82f6;
+  --app-warning: #60a5fa;
   --app-danger: #b91c1c;
-  --login-shell: radial-gradient(ellipse at top, #f8fafc 0%, #dbeafe 40%, #eef2ff 100%);
-  --login-orb-a: rgba(59, 130, 246, 0.22);
-  --login-orb-b: rgba(96, 165, 250, 0.16);
-  --login-orb-c: rgba(37, 99, 235, 0.14);
+  --login-shell: radial-gradient(ellipse at top, #dcecff 0%, #e8f2ff 40%, #edf5ff 100%);
+  --login-orb-a: rgba(79, 142, 247, 0.18);
+  --login-orb-b: rgba(96, 165, 250, 0.12);
+  --login-orb-c: rgba(59, 130, 246, 0.10);
   background: var(--app-bg);
   color: var(--app-fg);
 }
@@ -29,21 +29,21 @@ html {
 html[data-theme='dark'] {
   --app-bg: #020617;
   --app-fg: #e2e8f0;
-  --app-surface: rgba(15, 23, 42, 0.68);
-  --app-surface-strong: rgba(2, 6, 23, 0.92);
-  --app-surface-soft: rgba(15, 23, 42, 0.86);
-  --app-border: rgba(51, 65, 85, 0.62);
-  --app-border-strong: rgba(71, 85, 105, 0.72);
+  --app-surface: rgba(12, 18, 34, 0.70);
+  --app-surface-strong: rgba(5, 12, 24, 0.94);
+  --app-surface-soft: rgba(17, 24, 39, 0.88);
+  --app-border: rgba(71, 85, 105, 0.56);
+  --app-border-strong: rgba(100, 116, 139, 0.66);
   --app-muted: #94a3b8;
-  --app-accent: #60a5fa;
-  --app-accent-soft: rgba(96, 165, 250, 0.12);
-  --app-success: #60a5fa;
-  --app-warning: #3b82f6;
+  --app-accent: #79aefb;
+  --app-accent-soft: rgba(121, 174, 251, 0.14);
+  --app-success: #7cb1ff;
+  --app-warning: #5ea1fb;
   --app-danger: #f87171;
-  --login-shell: radial-gradient(ellipse at top, #0f172a 0%, #0b1320 45%, #020617 100%);
-  --login-orb-a: rgba(59, 130, 246, 0.20);
+  --login-shell: radial-gradient(ellipse at top, #0f172a 0%, #0a1222 44%, #020617 100%);
+  --login-orb-a: rgba(121, 174, 251, 0.18);
   --login-orb-b: rgba(96, 165, 250, 0.10);
-  --login-orb-c: rgba(37, 99, 235, 0.10);
+  --login-orb-c: rgba(79, 142, 247, 0.10);
   background: var(--app-bg);
   color: var(--app-fg);
 }
@@ -73,7 +73,7 @@ body {
   overflow: hidden;
   border: 1px solid var(--app-border);
   background: var(--app-surface);
-  box-shadow: 0 30px 100px rgba(15, 23, 42, 0.16);
+  box-shadow: 0 30px 100px rgba(15, 23, 42, 0.14);
   backdrop-filter: blur(24px);
 }
 
@@ -101,7 +101,7 @@ body {
 
 .login-field-group:focus-within .login-textfield {
   border-color: var(--app-accent);
-  box-shadow: 0 0 0 4px var(--app-accent-soft), 0 10px 25px rgba(37, 99, 235, 0.12);
+  box-shadow: 0 0 0 4px var(--app-accent-soft), 0 10px 25px rgba(79, 142, 247, 0.12);
 }
 
 .login-panel::before,
@@ -173,7 +173,7 @@ body {
 }
 
 .login-textfield:hover {
-  border-color: rgba(37, 99, 235, 0.28);
+  border-color: rgba(79, 142, 247, 0.3);
 }
 
 .login-card-shell:hover {
