@@ -1,8 +1,12 @@
+import 'dart:async';
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../models/cart_item.dart';
 import '../services/api_service.dart';
+import '../services/theme_controller.dart';
+import '../widgets/theme_fab.dart';
 import 'cart_screen.dart';
 import 'login_screen.dart';
 import 'purchases_screen.dart';
@@ -14,18 +18,44 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver {
   List<dynamic> _products = [];
   bool _loading = true;
   String? _errorMessage;
-  bool _isDarkMode = true;
   final Map<String, CartItemData> _cart = {};
+  Timer? _refreshTimer;
 
   @override
   void initState() {
     super.initState();
+    ThemeController.isDark.addListener(_themeListener);
+    WidgetsBinding.instance.addObserver(this);
     _loadProducts();
+    _refreshTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (mounted && !_loading) {
+        _loadProducts();
+      }
+    });
   }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _loadProducts();
+    }
+  }
+
+  void _themeListener() => setState(() {});
+
+  @override
+  void dispose() {
+    _refreshTimer?.cancel();
+    ThemeController.isDark.removeListener(_themeListener);
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  bool get _isDarkMode => ThemeController.isDark.value;
 
   Color get _pageStart =>
       _isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFDCEEFF);
@@ -58,12 +88,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   int get _cartCount =>
       _cart.values.fold<int>(0, (sum, item) => sum + item.quantity);
-
-  void _toggleTheme() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-  }
 
   Future<void> _loadProducts() async {
     setState(() {
@@ -456,15 +480,6 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: _isDarkMode ? const Color(0xFF0F172A) : Colors.white,
         foregroundColor: _textPrimary,
         actions: [
-          IconButton(
-            icon: Icon(
-              _isDarkMode
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-            ),
-            tooltip: _isDarkMode ? 'Modo claro' : 'Modo oscuro',
-            onPressed: _toggleTheme,
-          ),
           _buildCartBadge(),
           IconButton(
             icon: const Icon(Icons.receipt_long_outlined),
@@ -481,65 +496,75 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_pageStart, _pageEnd],
-          ),
-        ),
-        child: SafeArea(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _loadProducts,
-                  child: _errorMessage != null
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(24),
-                          children: [
-                            _EmptyState(
-                              icon: Icons.cloud_off_outlined,
-                              title: 'No pudimos cargar el catálogo',
-                              subtitle: _errorMessage!,
-                              isDarkMode: _isDarkMode,
-                            ),
-                          ],
-                        )
-                      : _products.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(24),
-                          children: [
-                            _EmptyState(
-                              icon: Icons.inventory_2_outlined,
-                              title: 'No hay productos disponibles',
-                              subtitle:
-                                  'Cuando existan productos, aparecerán aquí para agregarlos al carrito.',
-                              isDarkMode: _isDarkMode,
-                            ),
-                          ],
-                        )
-                      : ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                          children: [
-                            _buildHero(),
-                            const SizedBox(height: 16),
-                            ..._products.asMap().entries.map(
-                              (entry) => Padding(
-                                padding: const EdgeInsets.only(bottom: 14),
-                                child: _buildProductCard(
-                                  entry.value,
-                                  entry.key,
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_pageStart, _pageEnd],
+              ),
+            ),
+            child: SafeArea(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: _loadProducts,
+                      child: _errorMessage != null
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(24),
+                              children: [
+                                _EmptyState(
+                                  icon: Icons.cloud_off_outlined,
+                                  title: 'No pudimos cargar el catálogo',
+                                  subtitle: _errorMessage!,
+                                  isDarkMode: _isDarkMode,
                                 ),
+                              ],
+                            )
+                          : _products.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(24),
+                              children: [
+                                _EmptyState(
+                                  icon: Icons.inventory_2_outlined,
+                                  title: 'No hay productos disponibles',
+                                  subtitle:
+                                      'Cuando existan productos, aparecerán aquí para agregarlos al carrito.',
+                                  isDarkMode: _isDarkMode,
+                                ),
+                              ],
+                            )
+                          : ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                16,
+                                16,
+                                24,
                               ),
+                              children: [
+                                _buildHero(),
+                                const SizedBox(height: 16),
+                                ..._products.asMap().entries.map(
+                                  (entry) => Padding(
+                                    padding: const EdgeInsets.only(bottom: 14),
+                                    child: _buildProductCard(
+                                      entry.value,
+                                      entry.key,
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
-                          ],
-                        ),
-                ),
-        ),
+                    ),
+            ),
+          ),
+          const Positioned(right: 16, bottom: 16, child: ThemeFab()),
+        ],
       ),
     );
   }

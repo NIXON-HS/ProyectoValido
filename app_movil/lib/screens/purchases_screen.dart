@@ -2,6 +2,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 import '../services/api_service.dart';
+import '../services/theme_controller.dart';
+import '../widgets/theme_fab.dart';
+
+String _formatPurchaseStatus(dynamic value) {
+  final raw = (value ?? 'PENDIENTE').toString().trim().toUpperCase();
+  if (raw.isEmpty || raw == 'PENDIENTE') return 'Pendiente';
+  if (raw == 'VALIDADA' || raw == 'VALIDADO') return 'Validado';
+  if (raw == 'RECHAZADA' || raw == 'RECHAZADO') return 'Rechazado';
+  return raw[0] + raw.substring(1).toLowerCase();
+}
 
 class PurchasesScreen extends StatefulWidget {
   const PurchasesScreen({super.key});
@@ -14,13 +24,23 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   List<dynamic> _purchases = [];
   bool _loading = true;
   String? _errorMessage;
-  bool _isDarkMode = true;
 
   @override
   void initState() {
     super.initState();
+    ThemeController.isDark.addListener(_themeListener);
     _loadPurchases();
   }
+
+  void _themeListener() => setState(() {});
+
+  @override
+  void dispose() {
+    ThemeController.isDark.removeListener(_themeListener);
+    super.dispose();
+  }
+
+  bool get _isDarkMode => ThemeController.isDark.value;
 
   Color get _pageStart =>
       _isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFDCEEFF);
@@ -35,12 +55,6 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   Color get _textSecondary => _isDarkMode
       ? Colors.white.withValues(alpha: 0.72)
       : const Color(0xFF475569);
-
-  void _toggleTheme() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-  }
 
   Future<void> _loadPurchases() async {
     setState(() {
@@ -95,8 +109,9 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
 
   Map<String, dynamic> _asMap(dynamic value) {
     if (value is Map<String, dynamic>) return value;
-    if (value is Map)
+    if (value is Map) {
       return value.map((key, dynamic item) => MapEntry(key.toString(), item));
+    }
     return {};
   }
 
@@ -126,9 +141,18 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   }
 
   String _statusLabel(Map<String, dynamic> purchase) {
-    final status = (purchase['estado'] ?? purchase['status'] ?? 'Pendiente')
-        .toString();
-    return status.isEmpty ? 'Pendiente' : status;
+    return _formatPurchaseStatus(
+      purchase['estado_factura'] ?? purchase['estado'] ?? purchase['status'],
+    );
+  }
+
+  bool _isValidated(Map<String, dynamic> purchase) {
+    return _formatPurchaseStatus(
+          purchase['estado_factura'] ??
+              purchase['estado'] ??
+              purchase['status'],
+        ) ==
+        'Validado';
   }
 
   void _showDetails(Map<String, dynamic> purchase) {
@@ -183,6 +207,31 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
+                  if (_isValidated(purchase)) ...[
+                    const SizedBox(height: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF10B981).withValues(alpha: 0.14),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: const Color(
+                            0xFF10B981,
+                          ).withValues(alpha: 0.24),
+                        ),
+                      ),
+                      child: const Text(
+                        'Validado',
+                        style: TextStyle(
+                          color: Color(0xFF10B981),
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   _DetailChip(
                     label: 'Fecha',
@@ -341,82 +390,83 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
         foregroundColor: _textPrimary,
         actions: [
           IconButton(
-            icon: Icon(
-              _isDarkMode
-                  ? Icons.light_mode_outlined
-                  : Icons.dark_mode_outlined,
-            ),
-            tooltip: _isDarkMode ? 'Modo claro' : 'Modo oscuro',
-            onPressed: _toggleTheme,
-          ),
-          IconButton(
             icon: const Icon(Icons.refresh_rounded),
             onPressed: _loading ? null : _loadPurchases,
           ),
         ],
       ),
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [_pageStart, _pageEnd],
+      body: Stack(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [_pageStart, _pageEnd],
+              ),
+            ),
+            child: SafeArea(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : RefreshIndicator(
+                      onRefresh: _loadPurchases,
+                      child: _errorMessage != null
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(24),
+                              children: [
+                                _EmptyState(
+                                  icon: Icons.receipt_long_outlined,
+                                  title: 'No pudimos cargar tus compras',
+                                  subtitle: _errorMessage!,
+                                  isDarkMode: _isDarkMode,
+                                ),
+                              ],
+                            )
+                          : _purchases.isEmpty
+                          ? ListView(
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              padding: const EdgeInsets.all(24),
+                              children: [
+                                _EmptyState(
+                                  icon: Icons.receipt_outlined,
+                                  title: 'Todavía no tienes compras',
+                                  subtitle:
+                                      'Cuando compres desde el carrito, aquí verás tus facturas y su detalle.',
+                                  isDarkMode: _isDarkMode,
+                                ),
+                              ],
+                            )
+                          : ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                16,
+                                16,
+                                24,
+                              ),
+                              physics: const AlwaysScrollableScrollPhysics(),
+                              itemCount: _purchases.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 14),
+                              itemBuilder: (context, index) {
+                                final purchase = _asMap(_purchases[index]);
+                                return _PurchaseCard(
+                                  purchase: purchase,
+                                  isDarkMode: _isDarkMode,
+                                  textPrimary: _textPrimary,
+                                  textSecondary: _textSecondary,
+                                  border: _border,
+                                  onTap: () => _showDetails(purchase),
+                                  formatDate: _formatDate,
+                                  formatValue: _formatValue,
+                                );
+                              },
+                            ),
+                    ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          child: _loading
-              ? const Center(child: CircularProgressIndicator())
-              : RefreshIndicator(
-                  onRefresh: _loadPurchases,
-                  child: _errorMessage != null
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(24),
-                          children: [
-                            _EmptyState(
-                              icon: Icons.receipt_long_outlined,
-                              title: 'No pudimos cargar tus compras',
-                              subtitle: _errorMessage!,
-                              isDarkMode: _isDarkMode,
-                            ),
-                          ],
-                        )
-                      : _purchases.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.all(24),
-                          children: [
-                            _EmptyState(
-                              icon: Icons.receipt_outlined,
-                              title: 'Todavía no tienes compras',
-                              subtitle:
-                                  'Cuando compres desde el carrito, aquí verás tus facturas y su detalle.',
-                              isDarkMode: _isDarkMode,
-                            ),
-                          ],
-                        )
-                      : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          itemCount: _purchases.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 14),
-                          itemBuilder: (context, index) {
-                            final purchase = _asMap(_purchases[index]);
-                            return _PurchaseCard(
-                              purchase: purchase,
-                              isDarkMode: _isDarkMode,
-                              textPrimary: _textPrimary,
-                              textSecondary: _textSecondary,
-                              border: _border,
-                              onTap: () => _showDetails(purchase),
-                              formatDate: _formatDate,
-                              formatValue: _formatValue,
-                            );
-                          },
-                        ),
-                ),
-        ),
+          const Positioned(right: 16, bottom: 16, child: ThemeFab()),
+        ],
       ),
     );
   }
@@ -450,8 +500,9 @@ class _PurchaseCard extends StatelessWidget {
         purchase['factura'] ??
         purchase['invoice'] ??
         purchase['id'];
-    final status = (purchase['estado'] ?? purchase['status'] ?? 'Pendiente')
-        .toString();
+    final status = _formatPurchaseStatus(
+      purchase['estado_factura'] ?? purchase['estado'] ?? purchase['status'],
+    );
     final items =
         purchase['detalle'] ??
         purchase['detalles'] ??
@@ -524,6 +575,27 @@ class _PurchaseCard extends StatelessWidget {
                           style: TextStyle(
                             color: textSecondary,
                             fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          _formatPurchaseStatus(
+                            purchase['estado_factura'] ??
+                                purchase['estado'] ??
+                                purchase['status'],
+                          ),
+                          style: TextStyle(
+                            color:
+                                _formatPurchaseStatus(
+                                      purchase['estado_factura'] ??
+                                          purchase['estado'] ??
+                                          purchase['status'],
+                                    ) ==
+                                    'Validado'
+                                ? const Color(0xFF10B981)
+                                : textSecondary,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 12,
                           ),
                         ),
                       ],

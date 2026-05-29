@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 
 import '../models/cart_item.dart';
 import '../services/api_service.dart';
+import '../services/theme_controller.dart';
+import '../widgets/theme_fab.dart';
 
 class CartScreen extends StatefulWidget {
   const CartScreen({super.key, required this.initialItems});
@@ -16,11 +18,11 @@ class CartScreen extends StatefulWidget {
 class _CartScreenState extends State<CartScreen> {
   late List<CartItemData> _items;
   bool _processing = false;
-  bool _isDarkMode = true;
 
   @override
   void initState() {
     super.initState();
+    ThemeController.isDark.addListener(_themeListener);
     _items = widget.initialItems
         .map(
           (item) =>
@@ -28,6 +30,16 @@ class _CartScreenState extends State<CartScreen> {
         )
         .toList();
   }
+
+  void _themeListener() => setState(() {});
+
+  @override
+  void dispose() {
+    ThemeController.isDark.removeListener(_themeListener);
+    super.dispose();
+  }
+
+  bool get _isDarkMode => ThemeController.isDark.value;
 
   Color get _pageStart =>
       _isDarkMode ? const Color(0xFF0F172A) : const Color(0xFFDCEEFF);
@@ -48,12 +60,6 @@ class _CartScreenState extends State<CartScreen> {
 
   double get _total => _items.fold(0, (sum, item) => sum + item.subtotal);
   int get _totalUnits => _items.fold(0, (sum, item) => sum + item.quantity);
-
-  void _toggleTheme() {
-    setState(() {
-      _isDarkMode = !_isDarkMode;
-    });
-  }
 
   bool _hasStockIssue(CartItemData item) =>
       item.stock <= 0 || item.quantity > item.stock;
@@ -188,15 +194,6 @@ class _CartScreenState extends State<CartScreen> {
           backgroundColor: _isDarkMode ? const Color(0xFF0F172A) : Colors.white,
           foregroundColor: _textPrimary,
           actions: [
-            IconButton(
-              icon: Icon(
-                _isDarkMode
-                    ? Icons.light_mode_outlined
-                    : Icons.dark_mode_outlined,
-              ),
-              tooltip: _isDarkMode ? 'Modo claro' : 'Modo oscuro',
-              onPressed: _toggleTheme,
-            ),
             if (_items.isNotEmpty)
               IconButton(
                 onPressed: _processing ? null : _clearCart,
@@ -205,161 +202,169 @@ class _CartScreenState extends State<CartScreen> {
               ),
           ],
         ),
-        body: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [_pageStart, _pageEnd],
-            ),
-          ),
-          child: SafeArea(
-            child: _items.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(18),
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              color: _surfaceSoft,
-                              border: Border.all(color: _border),
-                            ),
-                            child: Icon(
-                              Icons.shopping_cart_outlined,
-                              size: 44,
-                              color: _textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Tu carrito está vacío',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.w800,
-                              color: _textPrimary,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Agrega productos desde el catálogo para comprar todo en un solo paso.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: _textSecondary),
-                          ),
-                        ],
-                      ),
-                    ),
-                  )
-                : Column(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                        child: Row(
-                          children: [
-                            Expanded(
-                              child: _HeaderTile(
-                                title: 'Productos en carrito',
-                                value: _items.length.toString(),
-                                icon: Icons.local_mall_outlined,
-                                isDarkMode: _isDarkMode,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: _HeaderTile(
-                                title: 'Total',
-                                value: '\$${_total.toStringAsFixed(2)}',
-                                icon: Icons.payments_outlined,
-                                isDarkMode: _isDarkMode,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                          itemCount: _items.length,
-                          separatorBuilder: (context, index) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, index) {
-                            final item = _items[index];
-                            return _CartCard(
-                              item: item,
-                              isDarkMode: _isDarkMode,
-                              textPrimary: _textPrimary,
-                              textSecondary: _textSecondary,
-                              border: _border,
-                              surface: _surface,
-                              onIncrease: () => _increaseQuantity(index),
-                              onDecrease: () => _decreaseQuantity(index),
-                              onRemove: () => _removeItemAt(index),
-                            );
-                          },
-                        ),
-                      ),
-                      SafeArea(
-                        top: false,
-                        child: Container(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-                          decoration: BoxDecoration(
-                            color: _isDarkMode
-                                ? Colors.black.withValues(alpha: 0.12)
-                                : Colors.white,
-                            border: Border(top: BorderSide(color: _border)),
-                          ),
-                          child: Row(
+        body: Stack(
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [_pageStart, _pageEnd],
+                ),
+              ),
+              child: SafeArea(
+                child: _items.isEmpty
+                    ? Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Expanded(
-                                child: OutlinedButton.icon(
-                                  onPressed: _processing ? null : _clearCart,
-                                  icon: const Icon(
-                                    Icons.remove_shopping_cart_outlined,
-                                  ),
-                                  label: const Text('Vaciar'),
+                              Container(
+                                padding: const EdgeInsets.all(18),
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: _surfaceSoft,
+                                  border: Border.all(color: _border),
+                                ),
+                                child: Icon(
+                                  Icons.shopping_cart_outlined,
+                                  size: 44,
+                                  color: _textPrimary,
                                 ),
                               ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                flex: 2,
-                                child: SizedBox(
-                                  height: 56,
-                                  child: FilledButton.icon(
-                                    onPressed: _processing
-                                        ? null
-                                        : _askAndBuyAll,
-                                    icon: _processing
-                                        ? const SizedBox(
-                                            width: 18,
-                                            height: 18,
-                                            child: CircularProgressIndicator(
-                                              strokeWidth: 2,
-                                              color: Colors.white,
-                                            ),
-                                          )
-                                        : const Icon(
-                                            Icons
-                                                .shopping_cart_checkout_outlined,
-                                          ),
-                                    label: Text(
-                                      _processing
-                                          ? 'Procesando...'
-                                          : 'Comprar todo',
-                                    ),
-                                  ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Tu carrito está vacío',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.w800,
+                                  color: _textPrimary,
                                 ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Agrega productos desde el catálogo para comprar todo en un solo paso.',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(color: _textSecondary),
                               ),
                             ],
                           ),
                         ),
+                      )
+                    : Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                            child: Row(
+                              children: [
+                                Expanded(
+                                  child: _HeaderTile(
+                                    title: 'Productos en carrito',
+                                    value: _items.length.toString(),
+                                    icon: Icons.local_mall_outlined,
+                                    isDarkMode: _isDarkMode,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: _HeaderTile(
+                                    title: 'Total',
+                                    value: '\$${_total.toStringAsFixed(2)}',
+                                    icon: Icons.payments_outlined,
+                                    isDarkMode: _isDarkMode,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Expanded(
+                            child: ListView.separated(
+                              padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                              itemCount: _items.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final item = _items[index];
+                                return _CartCard(
+                                  item: item,
+                                  isDarkMode: _isDarkMode,
+                                  textPrimary: _textPrimary,
+                                  textSecondary: _textSecondary,
+                                  border: _border,
+                                  surface: _surface,
+                                  onIncrease: () => _increaseQuantity(index),
+                                  onDecrease: () => _decreaseQuantity(index),
+                                  onRemove: () => _removeItemAt(index),
+                                );
+                              },
+                            ),
+                          ),
+                          SafeArea(
+                            top: false,
+                            child: Container(
+                              padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                              decoration: BoxDecoration(
+                                color: _isDarkMode
+                                    ? Colors.black.withValues(alpha: 0.12)
+                                    : Colors.white,
+                                border: Border(top: BorderSide(color: _border)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton.icon(
+                                      onPressed: _processing
+                                          ? null
+                                          : _clearCart,
+                                      icon: const Icon(
+                                        Icons.remove_shopping_cart_outlined,
+                                      ),
+                                      label: const Text('Vaciar'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    flex: 2,
+                                    child: SizedBox(
+                                      height: 56,
+                                      child: FilledButton.icon(
+                                        onPressed: _processing
+                                            ? null
+                                            : _askAndBuyAll,
+                                        icon: _processing
+                                            ? const SizedBox(
+                                                width: 18,
+                                                height: 18,
+                                                child:
+                                                    CircularProgressIndicator(
+                                                      strokeWidth: 2,
+                                                      color: Colors.white,
+                                                    ),
+                                              )
+                                            : const Icon(
+                                                Icons
+                                                    .shopping_cart_checkout_outlined,
+                                              ),
+                                        label: Text(
+                                          _processing
+                                              ? 'Procesando...'
+                                              : 'Comprar todo',
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-          ),
+              ),
+            ),
+            const Positioned(right: 16, bottom: 16, child: ThemeFab()),
+          ],
         ),
       ),
     );
