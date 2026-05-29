@@ -9,6 +9,8 @@ import { useTheme } from '../contexts/ThemeContext';
 const ROLES = ['admin', 'cliente'];
 
 const emptyForm = { nombre: '', email: '', rol: 'cliente', password: '' };
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const FULL_NAME_REGEX = /^[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]*(?: [A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]*)+$/;
 
 function getFilteredUsuarios(usuarios, roleFilter) {
   if (roleFilter === 'all') return usuarios;
@@ -27,6 +29,25 @@ function getInputClass(isLight) {
   return isLight
     ? 'bg-sky-50/70 border-sky-100 text-slate-900 placeholder:text-slate-500 focus:ring-sky-500/30'
     : 'bg-slate-900/60 border-slate-700 text-white placeholder:text-slate-500 focus:ring-blue-500/50';
+}
+
+function validateUserForm(form) {
+  const nombre = form.nombre.trim();
+  const email = form.email.trim();
+
+  if (!nombre || !email) {
+    return 'Nombre y correo son obligatorios.';
+  }
+
+  if (!FULL_NAME_REGEX.test(nombre)) {
+    return 'El nombre debe iniciar con mayúscula, tener palabras separadas por un solo espacio y no incluir números.';
+  }
+
+  if (!EMAIL_REGEX.test(email)) {
+    return 'Debes ingresar un correo electrónico válido.';
+  }
+
+  return '';
 }
 
 function UsersToolbar({ isLight, mutedClass, filteredCount, totalCount, roleFilter, setRoleFilter, onOpenCreate }) {
@@ -297,29 +318,32 @@ export default function Usuarios() {
   }
 
   async function handleSave() {
-    if (!form.nombre.trim() || !form.email.trim()) {
-      setError('Nombre y correo son obligatorios.');
+    const validationError = validateUserForm(form);
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setSaving(true);
     setError('');
     try {
+      const payload = {
+        nombre: form.nombre.trim(),
+        email: form.email.trim(),
+        rol: form.rol,
+      };
+
       if (editingUser) {
         // EDITAR — solo actualizamos los campos (no el id)
         await api.post('/usuarios', {
           id: editingUser.id,
-          nombre: form.nombre,
-          email: form.email,
-          rol: form.rol,
+          ...payload,
         });
       } else {
         // CREAR — necesitamos un ID único (usamos timestamp como stub)
         const newId = `manual-${Date.now()}`;
         await api.post('/usuarios', {
           id: newId,
-          nombre: form.nombre,
-          email: form.email,
-          rol: form.rol,
+          ...payload,
         });
       }
       closeModal();
