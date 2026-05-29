@@ -237,7 +237,7 @@ function useLoginController() {
         : !loading && !emailError && password.length > 0;
 
     const panelClasses = isLight
-        ? 'bg-white/94 border-slate-200/90 shadow-[0_24px_80px_rgba(15,23,42,0.10)]'
+        ? 'bg-white/94 border-black/80 shadow-[0_24px_80px_rgba(15,23,42,0.10)]'
         : 'bg-slate-900/72 border-slate-700/70 shadow-[0_24px_80px_rgba(2,6,23,0.46)]';
     const buttonClasses = isLight
         ? 'bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/10'
@@ -326,20 +326,29 @@ function LoginLeftPanel({ isLight }) {
             <div className="relative z-10 max-w-xl">
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white/90">
                     <ShieldCheck size={16} />
-                    Centro de acceso TechStore 360
+                    TechStore 360
                 </div>
 
                 <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-100/80">Panel privado</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.35em] text-cyan-100/80">Tu espacio de acceso</p>
                     <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">
-                        Entrada segura, visual clara y ritmo elegante.
+                        Hola, qué bueno verte aquí.
                     </h1>
                     <p className="mt-5 max-w-lg text-base leading-7 text-slate-200/90">
-                        Una puerta de acceso pensada para administrar la tienda con calma, distinguir rápido lo importante y dejar una impresión más moderna desde el primer instante.
+                        Tu acceso está listo para darte una experiencia confiable, sencilla y agradable desde el primer momento.
+                    </p>
+                    <p className="mt-4 max-w-lg text-sm leading-6 text-slate-200/80">
+                        Todo acompaña para que te sientas seguro, encuentres lo que buscas sin complicaciones y continúes con tranquilidad.
                     </p>
                     <div className="mt-6 inline-flex items-center gap-3 rounded-full border border-white/12 bg-white/8 px-4 py-2 text-sm text-white/85">
                         <ShieldCheck size={16} />
-                        Acceso sobrio, ordenado y listo para trabajar.
+                        Un acceso amable, limpio y fácil de usar.
+                    </div>
+                    <div className="mt-6 rounded-[1.5rem] border border-white/12 bg-white/8 px-5 py-4 text-sm leading-6 text-slate-100/90">
+                        <p className="font-semibold text-white">Un acceso que transmite confianza.</p>
+                        <p className="mt-2 text-slate-200/85">
+                            Si solo quieres acceder rápido, lo haces en pocos pasos; si necesitas registrarte, el camino sigue siendo claro y sencillo.
+                        </p>
                     </div>
                 </div>
             </div>
