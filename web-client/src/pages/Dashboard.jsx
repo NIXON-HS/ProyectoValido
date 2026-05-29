@@ -32,7 +32,7 @@ function ThemeSwitch({ isLight, toggleTheme }) {
     <button
       type="button"
       onClick={toggleTheme}
-      className={`dashboard-theme-switch fixed bottom-5 right-5 z-30 flex items-center gap-2 rounded-full border px-4 py-3 text-sm font-semibold shadow-xl backdrop-blur-md transition-all hover:scale-[1.02] ${isLight ? 'border-sky-200 bg-white/90 text-sky-900' : 'border-slate-700 bg-slate-900/85 text-slate-100'}`}
+      className={`dashboard-theme-switch fixed bottom-5 right-5 z-30 flex items-center gap-2 rounded-full border px-4 py-3 text-sm font-semibold shadow-xl backdrop-blur-md transition-all hover:scale-[1.02] ${isLight ? 'border-sky-300 bg-white/90 text-sky-900 shadow-sky-200/70' : 'border-slate-700 bg-slate-900/85 text-slate-100'}`}
       aria-label={isLight ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'}
     >
       {isLight ? <MoonStar size={18} /> : <SunMedium size={18} />}
@@ -58,10 +58,10 @@ export default function Dashboard() {
   const routeMeta = getRouteMeta(location.pathname);
 
   return (
-    <div className={`dashboard-shell flex h-screen transition-colors duration-300 ${isLight ? 'bg-[radial-gradient(circle_at_top,_#dbeafe_0%,_#eff6ff_35%,_#f8fafc_100%)] text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
+    <div className={`dashboard-shell flex h-screen transition-colors duration-300 ${isLight ? 'bg-[radial-gradient(circle_at_top,_#bfdbfe_0%,_#e0efff_34%,_#f3f8ff_100%)] text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
       <Sidebar />
       <div className="dashboard-content flex-1 overflow-auto">
-        <div className={`dashboard-topbar sticky top-0 z-20 border-b backdrop-blur-xl ${isLight ? 'border-sky-100 bg-sky-50/80' : 'border-slate-800 bg-slate-950/80'}`}>
+        <div className={`dashboard-topbar sticky top-0 z-20 border-b backdrop-blur-xl ${isLight ? 'border-sky-200 bg-sky-50/90' : 'border-slate-800 bg-slate-950/80'}`}>
           <div className="flex items-center justify-between gap-4 px-8 py-5">
             <div className="min-w-0">
               <div className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] ${isLight ? 'text-sky-700' : 'text-slate-400'}`}>
@@ -70,7 +70,7 @@ export default function Dashboard() {
               </div>
               <h2 className={`mt-2 text-3xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{routeMeta.label}</h2>
             </div>
-            <div className={`hidden shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 sm:flex ${isLight ? 'border-sky-100 bg-white/85' : 'border-slate-700 bg-slate-900/60'}`}>
+            <div className={`hidden shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 sm:flex ${isLight ? 'border-sky-200 bg-white/90 shadow-sm shadow-sky-200/40' : 'border-slate-700 bg-slate-900/60'}`}>
               <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/10 text-sky-300'}`}>
                 <UserCircle2 size={22} />
               </div>

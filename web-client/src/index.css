@@ -196,6 +196,38 @@ body {
   animation: dashboard-switch-in 520ms ease-out both;
 }
 
+.sidebar-shell {
+  animation: sidebar-shell-in 420ms ease-out both;
+}
+
+.brand-mark {
+  animation: brand-pop-in 460ms ease-out both;
+}
+
+.dashboard-nav-link {
+  position: relative;
+  overflow: hidden;
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background-color 180ms ease;
+}
+
+.dashboard-nav-link::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 0%, rgba(56, 189, 248, 0.13) 48%, transparent 100%);
+  transform: translateX(-120%);
+  transition: transform 300ms ease;
+  pointer-events: none;
+}
+
+.dashboard-nav-link:hover {
+  transform: translateX(2px);
+}
+
+.dashboard-nav-link:hover::after {
+  transform: translateX(120%);
+}
+
 .login-textfield::placeholder {
   color: var(--app-muted);
 }
@@ -288,5 +320,40 @@ body {
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sidebar-shell-in {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes brand-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) rotate(-6deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .sidebar-shell,
+  .brand-mark,
+  .dashboard-nav-link,
+  .dashboard-nav-link::after {
+    animation: none !important;
+    transition: none !important;
   }
 }
