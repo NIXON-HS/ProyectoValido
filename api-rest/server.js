@@ -181,14 +181,14 @@ app.get('/health', async (req, res) => {
     const { error } = await supabase.from('productos').select('id').limit(1);
     if (error) throw error;
 
-    res.json({ 
-      status: 'OK', 
-      database: 'CONNECTED', 
-      server: process.env.HOSTNAME || 'api-rest' 
+    res.json({
+      status: 'OK',
+      database: 'CONNECTED',
+      server: process.env.HOSTNAME || 'api-rest'
     });
   } catch (err) {
     console.error('🚨 SISTEMA CAÍDO / ERROR DB:', err.message);
-    
+
     // Enviar SMS de alerta al administrador
     const adminPhone = process.env.ADMIN_PHONE;
     if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
@@ -204,9 +204,9 @@ app.get('/health', async (req, res) => {
       }
     }
 
-    res.status(500).json({ 
-      status: 'ERROR', 
-      message: 'Base de datos o servidor no disponible' 
+    res.status(500).json({
+      status: 'ERROR',
+      message: 'Base de datos o servidor no disponible'
     });
   }
 });
@@ -316,17 +316,64 @@ app.get('/compras/:usuarioId', verificarToken, async (req, res) => {
 
 app.post('/compras', verificarToken, async (req, res) => {
   const { usuario_id, producto_id, cantidad, total, email_cliente, telefono_cliente } = req.body;
+  const cantidadNormalizada = Number.parseInt(cantidad, 10);
 
-  // 1. Guardar compra en Supabase
+  if (!usuario_id || !producto_id || !Number.isInteger(cantidadNormalizada) || cantidadNormalizada <= 0) {
+    return res.status(400).json({ error: 'Datos de compra inválidos' });
+  }
+
+  const { data: productoActual, error: productoError } = await supabase
+    .from('productos')
+    .select('id, nombre, stock')
+    .eq('id', producto_id)
+    .maybeSingle();
+
+  if (productoError) {
+    return res.status(500).json({ error: productoError.message });
+  }
+
+  if (!productoActual) {
+    return res.status(404).json({ error: 'Producto no encontrado' });
+  }
+
+  const stockAnterior = Number.parseInt(productoActual.stock ?? 0, 10) || 0;
+
+  // 1. Descontar stock de forma atómica: la primera compra que llegue gana.
+  const { data: stockActualizado, error: stockError } = await supabase
+    .from('productos')
+    .update({ stock: stockAnterior - cantidadNormalizada })
+    .eq('id', producto_id)
+    .gte('stock', cantidadNormalizada)
+    .select('id, stock');
+
+  if (stockError) {
+    return res.status(500).json({ error: stockError.message });
+  }
+
+  if (!stockActualizado || stockActualizado.length === 0) {
+    return res.status(409).json({
+      error: `No hay stock suficiente para ${productoActual.nombre}. Stock disponible: ${stockAnterior}`,
+      stock_disponible: stockAnterior,
+    });
+  }
+
+  // 2. Guardar compra solo después de asegurar el inventario.
   const { data: compra, error: compraError } = await supabase
     .from('compras')
-    .insert([{ usuario_id, producto_id, cantidad, total, estado_factura: 'PENDIENTE' }])
+    .insert([{ usuario_id, producto_id, cantidad: cantidadNormalizada, total, estado_factura: 'PENDIENTE' }])
     .select();
-  if (compraError) return res.status(500).json({ error: compraError.message });
+
+  if (compraError) {
+    await supabase
+      .from('productos')
+      .update({ stock: stockAnterior })
+      .eq('id', producto_id);
+    return res.status(500).json({ error: compraError.message });
+  }
 
   const idCompra = compra[0].id;
 
-  // 2. Llamar al servicio SOAP para generar factura
+  // 3. Llamar al servicio SOAP para generar factura. Si falla, revertimos stock y compra.
   let claveAcceso = null;
   try {
     const baseSoapUrl = process.env.SOAP_URL || 'http://soap-service:8000/wsdl';
@@ -344,11 +391,16 @@ app.post('/compras', verificarToken, async (req, res) => {
       .eq('id', idCompra);
   } catch (soapErr) {
     console.error('Error al llamar SOAP:', soapErr.message);
-    // 🚨 Alerta al administrador sobre fallo en SOAP (SMS y Correo)
+    await supabase.from('compras').delete().eq('id', idCompra);
+    await supabase
+      .from('productos')
+      .update({ stock: stockAnterior })
+      .eq('id', producto_id);
     enviarAlertaFalloSOAP(idCompra, soapErr.message);
+    return res.status(503).json({ error: 'El sistema de facturación no está disponible. Intenta más tarde.' });
   }
 
-  // 3. Enviar SMS y WhatsApp con Twilio
+  // 4. Enviar SMS y WhatsApp con Twilio
   const telefonoDestino = telefono_cliente || process.env.TWILIO_TO_TEST;
   if (process.env.TWILIO_SID && process.env.TWILIO_TOKEN) {
     // 3.1 Enviar SMS
@@ -377,7 +429,7 @@ app.post('/compras', verificarToken, async (req, res) => {
     }
   }
 
-  // 4. Enviar correo con Brevo
+  // 5. Enviar correo con Brevo
   if (email_cliente && process.env.BREVO_API_KEY) {
     try {
       await axios.post(
@@ -466,7 +518,8 @@ app.post('/compras', verificarToken, async (req, res) => {
 
   res.status(201).json({
     compra: compra[0],
-    factura: { ClaveAcceso: claveAcceso, Estado: 'VALIDADA' }
+    factura: { ClaveAcceso: claveAcceso, Estado: 'VALIDADA' },
+    stock_restante: stockActualizado[0].stock
   });
 });
 
