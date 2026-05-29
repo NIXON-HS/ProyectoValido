@@ -127,10 +127,10 @@ function Badge({ isLight, icon: Icon, title, description }) {
 
 function TextField({ id, label, icon: Icon, value, onChange, placeholder, type = 'text', inputMode, autoComplete, required = true, error, isLight, trailing }) {
     return (
-        <div className="space-y-2">
-            <label htmlFor={id} className={`text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-200'}`}>{label}</label>
+        <div className="login-field-group space-y-2">
+            <label htmlFor={id} className={`login-field-label text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-200'}`}>{label}</label>
             <div className="relative">
-                <Icon className={`absolute left-4 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} size={20} />
+                <Icon className={`login-field-icon absolute left-4 top-1/2 -translate-y-1/2 ${isLight ? 'text-slate-400' : 'text-slate-500'}`} size={20} />
                 <input
                     id={id}
                     type={type}
@@ -515,7 +515,7 @@ function LoginCard(props) {
     }
 
     return (
-        <section className={`rounded-[2rem] border p-6 sm:p-8 ${panelClasses} backdrop-blur-xl`}>
+        <section className={`login-card-shell rounded-[2rem] border p-6 sm:p-8 ${panelClasses} backdrop-blur-xl`}>
             <LoginCardHeader isRegistering={isRegistering} isLight={isLight} error={error} />
             <LoginFields
                 isRegistering={isRegistering}

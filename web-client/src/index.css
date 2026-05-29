@@ -77,6 +77,33 @@ body {
   backdrop-filter: blur(24px);
 }
 
+.login-card-shell {
+  animation: login-card-in 420ms ease-out both;
+}
+
+.login-field-group {
+  position: relative;
+  transition: transform 180ms ease, opacity 180ms ease;
+}
+
+.login-field-group:focus-within {
+  transform: translateY(-2px);
+}
+
+.login-field-group:focus-within .login-field-label {
+  color: var(--app-accent);
+}
+
+.login-field-group:focus-within .login-field-icon {
+  color: var(--app-accent);
+  transform: translateY(-50%) scale(1.08);
+}
+
+.login-field-group:focus-within .login-textfield {
+  border-color: var(--app-accent);
+  box-shadow: 0 0 0 4px var(--app-accent-soft), 0 10px 25px rgba(37, 99, 235, 0.12);
+}
+
 .login-panel::before,
 .login-panel::after {
   content: '';
@@ -137,11 +164,20 @@ body {
   border-color: var(--app-border);
   background: var(--app-surface-strong);
   color: var(--app-fg);
+  transition: border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, background-color 180ms ease;
 }
 
 .login-textfield:focus {
   border-color: var(--app-accent);
   box-shadow: 0 0 0 4px var(--app-accent-soft);
+}
+
+.login-textfield:hover {
+  border-color: rgba(37, 99, 235, 0.28);
+}
+
+.login-card-shell:hover {
+  box-shadow: 0 34px 110px rgba(15, 23, 42, 0.18);
 }
 
 .login-textfield::placeholder {
@@ -168,4 +204,26 @@ body {
 
 ::selection {
   background: rgba(14, 165, 233, 0.25);
+}
+
+@keyframes login-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-card-shell,
+  .login-field-group,
+  .login-textfield,
+  .login-field-icon {
+    animation: none !important;
+    transition: none !important;
+  }
 }
