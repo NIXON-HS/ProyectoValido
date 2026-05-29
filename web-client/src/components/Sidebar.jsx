@@ -27,9 +27,9 @@ export default function Sidebar() {
   ];
 
   return (
-    <div className={`sidebar-shell w-64 flex flex-col justify-between border-r ${isLight ? 'bg-gradient-to-b from-sky-100 via-sky-50 to-white border-sky-200 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'}`}>
+    <div className={`sidebar-shell w-full flex flex-col justify-between border-r lg:w-64 ${isLight ? 'bg-gradient-to-b from-sky-100 via-sky-50 to-white border-sky-200 text-slate-900' : 'bg-slate-900 border-slate-700 text-slate-100'}`}>
       <div>
-        <div className={`p-6 border-b ${isLight ? 'border-sky-200' : 'border-slate-700'}`}>
+        <div className={`p-4 sm:p-6 border-b ${isLight ? 'border-sky-200' : 'border-slate-700'}`}>
           <div className="flex items-center gap-3">
             <div className={`brand-mark flex h-10 w-10 items-center justify-center rounded-xl border ${isLight ? 'border-sky-300 bg-gradient-to-br from-sky-500 to-blue-600 text-white shadow-md shadow-sky-300/60' : 'border-slate-700 bg-slate-800 text-sky-300'}`}>
               <Store size={18} />
@@ -43,23 +43,23 @@ export default function Sidebar() {
             </div>
           </div>
         </div>
-        <nav className="p-4 space-y-2">
+        <nav className="grid grid-cols-3 gap-2 p-3 sm:flex sm:flex-col sm:space-y-2 sm:gap-0 sm:p-4">
           {links.map((link) => (
             <NavLink
               key={link.to}
               to={link.to}
-              className={({ isActive }) => `flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${getLinkClass(isLight, isActive)}`}
+              className={({ isActive }) => `flex items-center justify-center gap-2 rounded-xl px-3 py-3 text-xs transition-all sm:justify-start sm:gap-3 sm:px-4 sm:py-3 sm:text-base ${getLinkClass(isLight, isActive)}`}
             >
               <link.icon size={20} />
-              <span className="font-medium">{link.label}</span>
+              <span className="font-medium leading-tight text-center sm:text-left">{link.label}</span>
             </NavLink>
           ))}
         </nav>
       </div>
-      <div className={`p-4 border-t ${isLight ? 'border-sky-100' : 'border-slate-700'}`}>
+      <div className={`p-3 sm:p-4 border-t ${isLight ? 'border-sky-100' : 'border-slate-700'}`}>
         <button
           onClick={() => logout()}
-          className={`flex items-center gap-3 px-4 py-3 w-full rounded-xl transition-all font-medium ${isLight ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/10'}`}
+          className={`flex w-full items-center justify-center gap-3 rounded-xl px-4 py-3 font-medium transition-all sm:justify-start ${isLight ? 'text-rose-600 hover:bg-rose-50' : 'text-rose-400 hover:bg-rose-500/10'}`}
         >
           <LogOut size={20} />
           Cerrar Sesión

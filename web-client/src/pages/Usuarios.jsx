@@ -96,54 +96,56 @@ function UsersTable({ isLight, loading, mutedClass, tableHeaderClass, rowHoverCl
       {loading ? (
         <div className={`p-8 text-center ${mutedClass}`}>Cargando usuarios...</div>
       ) : (
-        <table className="w-full text-left">
-          <thead className={`text-sm ${tableHeaderClass}`}>
-            <tr>
-              <th className="p-4 font-medium">ID</th>
-              <th className="p-4 font-medium">Nombre</th>
-              <th className="p-4 font-medium">Email</th>
-              <th className="p-4 font-medium">Rol</th>
-              <th className="p-4 font-medium text-right">Acciones</th>
-            </tr>
-          </thead>
-          <tbody className={isLight ? 'divide-y divide-slate-200' : 'divide-y divide-slate-700/50'}>
-            {filteredUsuarios.map((user) => (
-              <tr key={user.id} className={`${rowHoverClass} transition-colors`}>
-                <td className={`p-4 text-xs truncate max-w-[120px] font-mono ${mutedClass}`}>{user.id}</td>
-                <td className={isLight ? 'p-4 text-slate-900' : 'p-4 text-white'}>
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-sky-500">
-                      <UserCircleIcon className="h-4 w-4" />
-                    </div>
-                    {user.nombre || <span className="italic text-slate-500">Sin nombre</span>}
-                  </div>
-                </td>
-                <td className={`p-4 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{user.email}</td>
-                <td className="p-4">
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${getRoleBadgeClass(isLight, user.rol)}`}>
-                    {user.rol}
-                  </span>
-                </td>
-                <td className="p-4 text-right space-x-2">
-                  <button
-                    onClick={() => onOpenEdit(user)}
-                    className="text-sky-500 hover:bg-sky-500/10 p-2 rounded-lg transition-colors inline-flex"
-                    title="Editar"
-                  >
-                    <Pencil size={16} />
-                  </button>
-                  <button
-                    onClick={() => onDelete(user.id)}
-                    className="text-red-400 hover:bg-red-500/10 p-2 rounded-lg transition-colors inline-flex"
-                    title="Eliminar"
-                  >
-                    <Trash2 size={16} />
-                  </button>
-                </td>
+        <div className="dashboard-table-shell">
+          <table className="w-full text-left">
+            <thead className={`text-sm ${tableHeaderClass}`}>
+              <tr>
+                <th className="p-4 font-medium">ID</th>
+                <th className="p-4 font-medium">Nombre</th>
+                <th className="p-4 font-medium">Email</th>
+                <th className="p-4 font-medium">Rol</th>
+                <th className="p-4 font-medium text-right">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className={isLight ? 'divide-y divide-slate-200' : 'divide-y divide-slate-700/50'}>
+              {filteredUsuarios.map((user) => (
+                <tr key={user.id} className={`${rowHoverClass} transition-colors`}>
+                  <td className={`p-4 text-xs truncate max-w-[120px] font-mono ${mutedClass}`}>{user.id}</td>
+                  <td className={isLight ? 'p-4 text-slate-900' : 'p-4 text-white'}>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-sky-500">
+                        <UserCircleIcon className="h-4 w-4" />
+                      </div>
+                      {user.nombre || <span className="italic text-slate-500">Sin nombre</span>}
+                    </div>
+                  </td>
+                  <td className={`p-4 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{user.email}</td>
+                  <td className="p-4">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${getRoleBadgeClass(isLight, user.rol)}`}>
+                      {user.rol}
+                    </span>
+                  </td>
+                  <td className="p-4 text-right space-x-2">
+                    <button
+                      onClick={() => onOpenEdit(user)}
+                      className="text-sky-500 hover:bg-sky-500/10 p-2 rounded-lg transition-colors inline-flex"
+                      title="Editar"
+                    >
+                      <Pencil size={16} />
+                    </button>
+                    <button
+                      onClick={() => onDelete(user.id)}
+                      className="text-red-400 hover:bg-red-500/10 p-2 rounded-lg transition-colors inline-flex"
+                      title="Eliminar"
+                    >
+                      <Trash2 size={16} />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
     </div>
   );

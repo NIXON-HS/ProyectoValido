@@ -58,11 +58,11 @@ export default function Dashboard() {
   const routeMeta = getRouteMeta(location.pathname);
 
   return (
-    <div className={`dashboard-shell flex h-screen transition-colors duration-300 ${isLight ? 'bg-[radial-gradient(circle_at_top,_#bfdbfe_0%,_#e0efff_34%,_#f3f8ff_100%)] text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
+    <div className={`dashboard-shell flex h-screen flex-col lg:flex-row transition-colors duration-300 ${isLight ? 'bg-[radial-gradient(circle_at_top,_#bfdbfe_0%,_#e0efff_34%,_#f3f8ff_100%)] text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
       <Sidebar />
       <div className="dashboard-content flex-1 overflow-auto">
         <div className={`dashboard-topbar sticky top-0 z-20 border-b backdrop-blur-xl ${isLight ? 'border-sky-200 bg-sky-50/90' : 'border-slate-800 bg-slate-950/80'}`}>
-          <div className="flex items-center justify-between gap-4 px-8 py-5">
+          <div className="flex flex-col gap-4 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-5">
             <div className="min-w-0">
               <div className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] ${isLight ? 'text-sky-700' : 'text-slate-400'}`}>
                 <Home size={14} />
@@ -81,7 +81,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <main className="dashboard-page px-8 pb-8 pt-10">
+        <main className="dashboard-page px-4 pb-6 pt-6 sm:px-8 sm:pb-8 sm:pt-10">
           <Routes>
             <Route path="/" element={<HomeContent isLight={isLight} />} />
             <Route path="/usuarios" element={<Usuarios />} />

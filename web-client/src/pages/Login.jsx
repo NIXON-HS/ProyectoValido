@@ -322,7 +322,7 @@ function useLoginController() {
 
 function LoginLeftPanel({ isLight }) {
     return (
-        <section className="login-panel login-hero rounded-[2rem] p-8 lg:p-10">
+        <section className="login-panel login-hero hidden rounded-[2rem] p-8 lg:block lg:p-10">
             <div className="relative z-10 max-w-xl">
                 <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white/90">
                     <ShieldCheck size={16} />
@@ -560,7 +560,7 @@ function LoginView() {
     const props = useLoginController();
 
     return (
-        <div className="theme-shell relative min-h-screen overflow-hidden px-4 py-8 transition-colors duration-300">
+        <div className="theme-shell relative min-h-screen overflow-hidden px-3 py-4 sm:px-4 sm:py-8 transition-colors duration-300">
             <div className="pointer-events-none absolute inset-0 opacity-80">
                 <div className="absolute -top-24 left-1/4 h-72 w-72 rounded-full blur-3xl" style={{ background: 'var(--login-orb-a)' }} />
                 <div className="absolute top-40 right-[-4rem] h-80 w-80 rounded-full blur-3xl" style={{ background: 'var(--login-orb-b)' }} />
@@ -569,8 +569,8 @@ function LoginView() {
 
             <ThemeToggleButton isLight={props.isLight} onToggle={props.toggleTheme} />
 
-            <div className="relative z-10 mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center justify-center">
-                <div className="grid w-full gap-8 lg:grid-cols-[1.05fr_0.95fr]">
+            <div className="relative z-10 mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-6xl items-center justify-center">
+                <div className="grid w-full gap-4 lg:grid-cols-[1.05fr_0.95fr] lg:gap-8">
                     <LoginLeftPanel isLight={props.isLight} />
                     <LoginCard {...props} />
                 </div>

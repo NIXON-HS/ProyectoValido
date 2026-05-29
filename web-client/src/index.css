@@ -228,6 +228,15 @@ body {
   transform: translateX(120%);
 }
 
+.dashboard-table-shell {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.dashboard-table-shell table {
+  min-width: 720px;
+}
+
 .login-textfield::placeholder {
   color: var(--app-muted);
 }
@@ -355,5 +364,111 @@ body {
   .dashboard-nav-link::after {
     animation: none !important;
     transition: none !important;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-topbar .px-8 {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+  }
+
+  .dashboard-page {
+    padding-left: 1.25rem;
+    padding-right: 1.25rem;
+    padding-top: 1.25rem;
+    padding-bottom: 1.25rem;
+  }
+
+  .dashboard-shell {
+    min-height: 100vh;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-shell {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .sidebar-shell {
+    width: 100%;
+    border-right: 0;
+    border-bottom: 1px solid var(--app-border);
+  }
+
+  .dashboard-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-topbar {
+    position: sticky;
+    top: 0;
+  }
+
+  .dashboard-topbar .flex.items-center.justify-between {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .dashboard-topbar .flex.items-center.justify-between>div:last-child {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .dashboard-page {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 1rem;
+    padding-bottom: 5rem;
+  }
+
+  .dashboard-page h2 {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .dashboard-table-shell table {
+    min-width: 640px;
+  }
+
+  .dashboard-theme-switch {
+    right: 1rem;
+    bottom: 1rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .dashboard-theme-switch span {
+    display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-page {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+
+  .dashboard-topbar .flex.items-center.justify-between {
+    gap: 0.75rem;
+  }
+
+  .dashboard-topbar h2 {
+    font-size: 1.35rem;
+    line-height: 1.75rem;
+  }
+
+  .dashboard-table-shell table {
+    min-width: 560px;
+  }
+
+  .dashboard-shell .rounded-[28px] {
+    border-radius: 1.25rem;
+  }
+
+  .login-panel {
+    border-radius: 1.5rem;
   }
 }

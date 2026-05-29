@@ -93,54 +93,56 @@ export default function Compras() {
       </div>
 
       <div className={`rounded-3xl border overflow-hidden shadow-sm ${surfaceClass}`}>
-        <table className="w-full text-left">
-          <thead className={`text-sm ${isLight ? 'bg-slate-50 text-slate-500' : 'bg-slate-900/50 text-slate-400'}`}>
-            <tr>
-              <th className="p-4 font-medium">ID Transacción</th>
-              <th className="p-4 font-medium">Cliente</th>
-              <th className="p-4 font-medium">Producto</th>
-              <th className="p-4 font-medium">Fecha</th>
-              <th className="p-4 font-medium text-right">Total</th>
-              <th className="p-4 font-medium text-center">Factura SOAP</th>
-            </tr>
-          </thead>
-          <tbody className={isLight ? 'divide-y divide-slate-200' : 'divide-y divide-slate-700/50'}>
-            {filteredCompras.map(c => (
-              <tr key={c.id} className={isLight ? 'hover:bg-slate-50/80 transition-colors' : 'hover:bg-slate-700/25 transition-colors'}>
-                <td className={`p-4 text-sm font-mono ${mutedClass}`}>#{c.id}</td>
-                <td className="p-4">
-                  <div className={`font-medium ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>{c.usuarios?.nombre || 'Usuario Desconocido'}</div>
-                  <div className={`text-xs ${mutedClass}`}>{c.usuarios?.email}</div>
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center gap-2">
-                    <Package size={16} className={isLight ? 'text-sky-500' : 'text-sky-300'} />
-                    {c.productos?.nombre} x{c.cantidad}
-                  </div>
-                </td>
-                <td className={`p-4 text-sm ${mutedClass}`}>
-                  {new Date(c.fecha).toLocaleString()}
-                </td>
-                <td className={`p-4 text-right font-bold ${isLight ? 'text-sky-700' : 'text-emerald-400'}`}>
-                  ${c.total}
-                </td>
-                <td className="p-4">
-                  <div className="flex justify-center">
-                    {c.estado_factura === 'VALIDADA' ? (
-                      <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
-                        <CheckCircle2 size={14} /> VALIDADA
-                      </span>
-                    ) : (
-                      <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                        <Clock size={14} /> PENDIENTE
-                      </span>
-                    )}
-                  </div>
-                </td>
+        <div className="dashboard-table-shell">
+          <table className="w-full text-left">
+            <thead className={`text-sm ${isLight ? 'bg-slate-50 text-slate-500' : 'bg-slate-900/50 text-slate-400'}`}>
+              <tr>
+                <th className="p-4 font-medium">ID Transacción</th>
+                <th className="p-4 font-medium">Cliente</th>
+                <th className="p-4 font-medium">Producto</th>
+                <th className="p-4 font-medium">Fecha</th>
+                <th className="p-4 font-medium text-right">Total</th>
+                <th className="p-4 font-medium text-center">Factura SOAP</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className={isLight ? 'divide-y divide-slate-200' : 'divide-y divide-slate-700/50'}>
+              {filteredCompras.map(c => (
+                <tr key={c.id} className={isLight ? 'hover:bg-slate-50/80 transition-colors' : 'hover:bg-slate-700/25 transition-colors'}>
+                  <td className={`p-4 text-sm font-mono ${mutedClass}`}>#{c.id}</td>
+                  <td className="p-4">
+                    <div className={`font-medium ${isLight ? 'text-slate-900' : 'text-slate-200'}`}>{c.usuarios?.nombre || 'Usuario Desconocido'}</div>
+                    <div className={`text-xs ${mutedClass}`}>{c.usuarios?.email}</div>
+                  </td>
+                  <td className="p-4">
+                    <div className="flex items-center gap-2">
+                      <Package size={16} className={isLight ? 'text-sky-500' : 'text-sky-300'} />
+                      {c.productos?.nombre} x{c.cantidad}
+                    </div>
+                  </td>
+                  <td className={`p-4 text-sm ${mutedClass}`}>
+                    {new Date(c.fecha).toLocaleString()}
+                  </td>
+                  <td className={`p-4 text-right font-bold ${isLight ? 'text-sky-700' : 'text-emerald-400'}`}>
+                    ${c.total}
+                  </td>
+                  <td className="p-4">
+                    <div className="flex justify-center">
+                      {c.estado_factura === 'VALIDADA' ? (
+                        <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${isLight ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'}`}>
+                          <CheckCircle2 size={14} /> VALIDADA
+                        </span>
+                      ) : (
+                        <span className={`flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium border ${isLight ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                          <Clock size={14} /> PENDIENTE
+                        </span>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         {filteredCompras.length === 0 && (
           <div className={`p-12 text-center flex flex-col items-center gap-3 ${mutedClass}`}>
             <FileText size={48} className={isLight ? 'text-slate-300' : 'text-slate-700'} />
