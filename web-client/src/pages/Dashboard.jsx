@@ -1,27 +1,92 @@
+/* eslint-disable react/prop-types */
 import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Usuarios from './Usuarios';
 import Productos from './Productos';
 import Compras from './Compras';
+import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { Home, MoonStar, SunMedium, UserCircle2 } from 'lucide-react';
+
+function formatUserLabel(currentUser) {
+  const candidate = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Usuario';
+  return candidate
+    .replace(/[._-]+/g, ' ')
+    .split(' ')
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+}
+
+function getRouteMeta(pathname) {
+  const normalized = pathname.replace(/\/+$/, '') || '/';
+  if (normalized === '/usuarios') return { label: 'Usuarios', path: 'Inicio / Usuarios' };
+  if (normalized === '/productos') return { label: 'Productos', path: 'Inicio / Productos' };
+  if (normalized === '/compras') return { label: 'Compras', path: 'Inicio / Compras' };
+  return { label: 'Inicio', path: 'Inicio' };
+}
+
+function ThemeSwitch({ isLight, toggleTheme }) {
+  return (
+    <button
+      type="button"
+      onClick={toggleTheme}
+      className={`dashboard-theme-switch fixed bottom-5 right-5 z-30 flex items-center gap-2 rounded-full border px-4 py-3 text-sm font-semibold shadow-xl backdrop-blur-md transition-all hover:scale-[1.02] ${isLight ? 'border-slate-200 bg-white/90 text-slate-800' : 'border-slate-700 bg-slate-900/85 text-slate-100'}`}
+      aria-label={isLight ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'}
+    >
+      {isLight ? <MoonStar size={18} /> : <SunMedium size={18} />}
+      <span>{isLight ? 'Modo claro' : 'Modo oscuro'}</span>
+    </button>
+  );
+}
 
 export default function Dashboard() {
+  const location = useLocation();
+  const { currentUser } = useAuth();
+  const { isLight, toggleTheme } = useTheme();
+  const userLabel = formatUserLabel(currentUser);
+  const routeMeta = getRouteMeta(location.pathname);
+
   return (
-    <div className="flex h-screen bg-slate-900">
+    <div className={`dashboard-shell flex h-screen transition-colors duration-300 ${isLight ? 'bg-slate-50 text-slate-900' : 'bg-slate-950 text-slate-100'}`}>
       <Sidebar />
-      <div className="flex-1 overflow-auto p-8">
-        <Routes>
-          <Route path="/" element={
-            <div>
-              <h2 className="text-3xl font-bold mb-4">Bienvenido al Panel de Control</h2>
-              <p className="text-slate-400">Selecciona una opción del menú lateral para comenzar.</p>
+      <div className="dashboard-content flex-1 overflow-auto">
+        <div className={`dashboard-topbar sticky top-0 z-20 border-b backdrop-blur-xl ${isLight ? 'border-slate-200 bg-white/85' : 'border-slate-800 bg-slate-950/80'}`}>
+          <div className="flex items-center justify-between gap-4 px-8 py-5">
+            <div className="min-w-0">
+              <div className={`flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.28em] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>
+                <Home size={14} />
+                <span>{routeMeta.path}</span>
+              </div>
+              <h2 className={`mt-2 text-3xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>{routeMeta.label}</h2>
             </div>
-          } />
-          <Route path="/usuarios" element={<Usuarios />} />
-          <Route path="/productos" element={<Productos />} />
-          <Route path="/compras" element={<Compras />} />
-        </Routes>
+            <div className={`hidden shrink-0 items-center gap-3 rounded-2xl border px-4 py-3 sm:flex ${isLight ? 'border-slate-200 bg-slate-50' : 'border-slate-700 bg-slate-900/60'}`}>
+              <div className={`flex h-10 w-10 items-center justify-center rounded-full ${isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/10 text-sky-300'}`}>
+                <UserCircle2 size={22} />
+              </div>
+              <div className="text-right">
+                <div className={`text-xs uppercase tracking-[0.24em] ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>Usuario</div>
+                <div className={`mt-1 font-semibold ${isLight ? 'text-slate-900' : 'text-slate-100'}`}>{userLabel}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="dashboard-page p-8">
+          <Routes>
+            <Route path="/" element={
+              <div>
+                <h2 className={`text-3xl font-bold mb-4 ${isLight ? 'text-slate-900' : 'text-white'}`}>Bienvenido al Panel de Control</h2>
+                <p className={isLight ? 'text-slate-600' : 'text-slate-400'}>Selecciona una opción del menú lateral para comenzar.</p>
+              </div>
+            } />
+            <Route path="/usuarios" element={<Usuarios />} />
+            <Route path="/productos" element={<Productos />} />
+            <Route path="/compras" element={<Compras />} />
+          </Routes>
+        </div>
       </div>
+      <ThemeSwitch isLight={isLight} toggleTheme={toggleTheme} />
     </div>
   );
 }
