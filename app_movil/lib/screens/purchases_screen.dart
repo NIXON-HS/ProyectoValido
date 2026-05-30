@@ -87,7 +87,9 @@ class _PurchaseCard extends StatelessWidget {
     final invoice = purchase['id_factura'] ?? purchase['factura'] ?? purchase['invoice'] ?? purchase['id'];
     final status  = _formatStatus(purchase['estado_factura'] ?? purchase['estado'] ?? purchase['status']);
     final items   = purchase['detalle'] ?? purchase['detalles'] ?? purchase['items'] ?? purchase['productos'];
-    final count   = items is List ? items.length : 0;
+    final count   = items is List
+        ? items.length
+        : (int.tryParse((purchase['cantidad'] ?? 1).toString()) ?? 1);
     final total   = formatValue(purchase['total'] ?? purchase['monto_total'] ?? purchase['total_venta']);
 
     return GestureDetector(
@@ -258,7 +260,13 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
   List<Map<String, dynamic>> _items(Map<String, dynamic> p) {
     final raw = p['detalle'] ?? p['detalles'] ?? p['items'] ?? p['productos'] ?? [];
     if (raw is List) return raw.map(_asMap).toList();
-    if (raw is Map)  return [_asMap(raw)];
+    if (raw is Map) {
+      final itemMap = Map<String, dynamic>.from(_asMap(raw));
+      if (!itemMap.containsKey('cantidad')) {
+        itemMap['cantidad'] = p['cantidad'] ?? 1;
+      }
+      return [itemMap];
+    }
     return [];
   }
 

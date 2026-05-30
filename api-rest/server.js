@@ -373,31 +373,66 @@ app.post('/compras', verificarToken, async (req, res) => {
 
   const idCompra = compra[0].id;
 
-  // 3. Llamar al servicio SOAP para generar factura. Si falla, revertimos stock y compra.
+  // 3. Llamar al servicio SOAP para generar factura con reintentos y tolerancia a fallos
   let claveAcceso = null;
-  try {
-    const baseSoapUrl = process.env.SOAP_URL || 'http://soap-service:8000/wsdl';
-    const soapUrl = baseSoapUrl.endsWith('?wsdl') ? baseSoapUrl : `${baseSoapUrl}?wsdl`;
-    const xmlFactura = `<Factura><IdCompra>${idCompra}</IdCompra><Total>${total}</Total></Factura>`;
-    const client = await soap.createClientAsync(soapUrl);
-    client.setEndpoint(baseSoapUrl);
-    const [soapResult] = await client.GenerarFacturaXMLAsync({ idCompra: idCompra.toString() });
-    claveAcceso = soapResult?.ClaveAcceso || null;
+  let soapErrorOccurred = false;
+  let lastSoapError = '';
 
-    // Actualizar estado de factura en Supabase
-    await supabase
-      .from('compras')
-      .update({ estado_factura: 'VALIDADA' })
-      .eq('id', idCompra);
-  } catch (soapErr) {
-    console.error('Error al llamar SOAP:', soapErr.message);
+  const baseSoapUrl = process.env.SOAP_URL || 'http://soap-service:8000/wsdl';
+  // Usar WSDL local para evitar errores de conexión / 503 en cold starts de Render
+  const wsdlPath = './factura.wsdl';
+
+  // Intentar crear el cliente SOAP y llamar al servicio con hasta 3 reintentos
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      console.log(`[SOAP] Intentando llamar al servicio de facturación (Intento ${attempt}/3)...`);
+      const client = await soap.createClientAsync(wsdlPath);
+      client.setEndpoint(baseSoapUrl);
+      
+      // Configurar un timeout de red mayor (p.ej. 15 segundos) para soportar el cold start de Render
+      client.setHttpClient({
+        request: (url, data, callback, exheaders, options) => {
+          const requestOptions = { ...options, timeout: 15000 };
+          return soap.BearerSecurity.prototype ? 
+            soap.HttpClient.prototype.request(url, data, callback, exheaders, requestOptions) :
+            require('request')(url, { body: data, headers: exheaders, ...requestOptions }, callback);
+        }
+      });
+
+      const [soapResult] = await client.GenerarFacturaXMLAsync({ idCompra: idCompra.toString() });
+      claveAcceso = soapResult?.ClaveAcceso || null;
+      soapErrorOccurred = false;
+      break; // Éxito, salir del bucle de reintentos!
+    } catch (err) {
+      soapErrorOccurred = true;
+      lastSoapError = err.message;
+      console.warn(`[SOAP Warning] Intento ${attempt} fallido: ${err.message}`);
+      if (attempt < 3) {
+        // Esperar 3 segundos antes del próximo intento (dar tiempo a Render para despertar)
+        await new Promise(resolve => setTimeout(resolve, 3000));
+      }
+    }
+  }
+
+  if (soapErrorOccurred) {
+    console.error('Error al llamar SOAP tras 3 intentos:', lastSoapError);
     await supabase.from('compras').delete().eq('id', idCompra);
     await supabase
       .from('productos')
       .update({ stock: stockAnterior })
       .eq('id', producto_id);
-    enviarAlertaFalloSOAP(idCompra, soapErr.message);
-    return res.status(503).json({ error: 'El sistema de facturación no está disponible. Intenta más tarde.' });
+    enviarAlertaFalloSOAP(idCompra, lastSoapError);
+    return res.status(503).json({ error: `El sistema de facturación no está disponible. Error: ${lastSoapError}` });
+  }
+
+  // Actualizar estado de factura en Supabase
+  try {
+    await supabase
+      .from('compras')
+      .update({ estado_factura: 'VALIDADA' })
+      .eq('id', idCompra);
+  } catch (dbErr) {
+    console.error('Error actualizando factura en DB:', dbErr.message);
   }
 
   // 4. Enviar SMS y WhatsApp con Twilio
