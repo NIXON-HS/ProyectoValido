@@ -602,22 +602,24 @@ app.post('/compras', verificarToken, async (req, res) => {
                     <p class="subtext">Tu pago ha sido validado de forma distribuida en nuestro cluster de resiliencia. Tu factura electrónica XML ha sido autorizada por el Servicio de Facturación SOAP.</p>
                     
                     <div class="receipt-box">
-                      <div class="receipt-row">
-                        <span class="label">N° de Comprobante</span>
-                        <span class="value">${claveAcceso || idCompra}</span>
-                      </div>
-                      <div class="receipt-row">
-                        <span class="label">Fecha de Emisión</span>
-                        <span class="value">${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</span>
-                      </div>
-                      <div class="receipt-row">
-                        <span class="label">Estado de Transacción</span>
-                        <span class="value"><span class="status-badge">VALIDADA</span></span>
-                      </div>
-                      <div class="receipt-row">
-                        <span class="label" style="font-size: 16px; color: #ffffff; font-weight: 700; padding-top: 4px;">Total Cancelado</span>
-                        <span class="value total-value">$${total}</span>
-                      </div>
+                      <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%;">
+                        <tr>
+                          <td style="padding: 14px 0; border-bottom: 1px solid #374151; font-size: 14px; color: #9ca3af; font-weight: 500; text-align: left;">N° de Comprobante</td>
+                          <td align="right" style="padding: 14px 0; border-bottom: 1px solid #374151; font-size: 14px; color: #ffffff; font-weight: 700; text-align: right;">${claveAcceso || idCompra}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 14px 0; border-bottom: 1px solid #374151; font-size: 14px; color: #9ca3af; font-weight: 500; text-align: left;">Fecha de Emisión</td>
+                          <td align="right" style="padding: 14px 0; border-bottom: 1px solid #374151; font-size: 14px; color: #ffffff; font-weight: 700; text-align: right;">${new Date().toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' })}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 14px 0; border-bottom: 1px solid #374151; font-size: 14px; color: #9ca3af; font-weight: 500; text-align: left;">Estado de Transacción</td>
+                          <td align="right" style="padding: 14px 0; border-bottom: 1px solid #374151; font-size: 14px; text-align: right;"><span class="status-badge">VALIDADA</span></td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 18px 0 0 0; font-size: 16px; color: #ffffff; font-weight: 700; text-align: left;">Total Cancelado</td>
+                          <td align="right" style="padding: 18px 0 0 0; font-size: 22px; color: #3b82f6; font-weight: 900; text-align: right;">$${total}</td>
+                        </tr>
+                      </table>
                     </div>
                     
                     <div class="btn-container">
