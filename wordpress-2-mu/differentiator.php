@@ -15,6 +15,20 @@ if (isset($_SERVER['HTTP_X_REAL_IP']) || (isset($_SERVER['HTTP_HOST']) && $_SERV
     }
 }
 
+// Sobrescribir opciones home y siteurl dinámicamente cuando se accede por el proxy
+add_filter('option_home', function($url) {
+    if (isset($_SERVER['HTTP_X_REAL_IP']) || (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'localhost' && !in_array($_SERVER['SERVER_PORT'], ['8081', '8082']))) {
+        return 'http://localhost/wordpress';
+    }
+    return $url;
+});
+add_filter('option_siteurl', function($url) {
+    if (isset($_SERVER['HTTP_X_REAL_IP']) || (isset($_SERVER['HTTP_HOST']) && $_SERVER['HTTP_HOST'] === 'localhost' && !in_array($_SERVER['SERVER_PORT'], ['8081', '8082']))) {
+        return 'http://localhost/wordpress';
+    }
+    return $url;
+});
+
 if (!defined('ABSPATH')) exit;
 
 function wp_diff_badge_servidor() {

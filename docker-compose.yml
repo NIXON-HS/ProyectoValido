@@ -293,6 +293,20 @@ services:
       - ./web-client/src:/app/src
       - ./web-client/public:/app/public
 
+  # ==========================================
+  # 9. REPLICADOR CDC (SUPABASE -> MONGO & AIVEN)
+  # ==========================================
+  replicador:
+    image: node:22-alpine
+    restart: always
+    working_dir: /app
+    volumes:
+      - .:/app
+      - /app/node_modules # Evita sobreescribir node_modules del host en el contenedor
+    command: sh -c "npm install && node replicador.js"
+    env_file:
+      - .env
+
 # ==========================================
 # VOLÚMENES PERSISTENTES
 # Todo el contenido se guarda en Docker volumes.
