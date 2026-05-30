@@ -8,8 +8,8 @@ import { useTheme } from '../contexts/ThemeContext';
 function StockBadge({ stock, isLight }) {
   const n = Number(stock);
   if (n <= 0)  return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isLight ? 'bg-red-50 text-red-600 border border-red-200' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>Sin stock</span>;
-  if (n <= 10) return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isLight ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>Stock bajo: {n}</span>;
-  return          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isLight ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>{n} en stock</span>;
+  if (n <= 10) return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isLight ? 'bg-amber-50 text-amber-600 border border-amber-200' : 'bg-amber-500/10 text-amber-400 border border-amber-500/20'}`}>Stock: {n}</span>;
+  return          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${isLight ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}`}>Stock: {n}</span>;
 }
 
 /* ── Product Card ── */
