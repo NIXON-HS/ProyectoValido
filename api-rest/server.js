@@ -482,17 +482,11 @@ app.post('/compras', verificarToken, async (req, res) => {
       const client = await soap.createClientAsync(wsdlPath);
       client.setEndpoint(baseSoapUrl);
       
-      // Configurar un timeout de red mayor (p.ej. 15 segundos) para soportar el cold start de Render
-      client.setHttpClient({
-        request: (url, data, callback, exheaders, options) => {
-          const requestOptions = { ...options, timeout: 15000 };
-          return soap.BearerSecurity.prototype ? 
-            soap.HttpClient.prototype.request(url, data, callback, exheaders, requestOptions) :
-            require('request')(url, { body: data, headers: exheaders, ...requestOptions }, callback);
-        }
-      });
-
-      const [soapResult] = await client.GenerarFacturaXMLAsync({ idCompra: idCompra.toString() });
+      // Pasar el timeout (15000ms) directamente en las opciones de la llamada para soportar el cold start de Render
+      const [soapResult] = await client.GenerarFacturaXMLAsync(
+        { idCompra: idCompra.toString() },
+        { timeout: 15000 }
+      );
       claveAcceso = soapResult?.ClaveAcceso || null;
       soapErrorOccurred = false;
       break; // Éxito, salir del bucle de reintentos!
