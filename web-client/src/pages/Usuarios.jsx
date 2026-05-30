@@ -2,387 +2,384 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import api from '../api';
-import { Trash2, Pencil, X, Save } from 'lucide-react';
-import { UserPlusIcon, UserCircleIcon, EnvelopeIcon, ShieldCheckIcon, FunnelIcon } from '@heroicons/react/24/outline';
+import { Trash2, Pencil, X, Save, Search, Users, ShieldCheck, User as UserIcon, Filter } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 
 const ROLES = ['admin', 'cliente'];
-
 const emptyForm = { nombre: '', email: '', rol: 'cliente', password: '' };
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const FULL_NAME_REGEX = /^[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]*(?: [A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÜÑáéíóúüñ]*)+$/;
 
-function getFilteredUsuarios(usuarios, roleFilter) {
-  if (roleFilter === 'all') return usuarios;
-  return usuarios.filter((usuario) => usuario.rol === roleFilter);
-}
-
-function getRoleBadgeClass(isLight, rol) {
-  if (rol === 'admin') {
-    return isLight ? 'bg-sky-100 text-sky-700' : 'bg-sky-500/10 text-sky-300';
-  }
-
-  return isLight ? 'bg-slate-100 text-slate-700' : 'bg-slate-700/60 text-slate-200';
-}
-
-function getInputClass(isLight) {
-  return isLight
-    ? 'bg-sky-50/70 border-sky-100 text-slate-900 placeholder:text-slate-500 focus:ring-sky-500/30'
-    : 'bg-slate-900/60 border-slate-700 text-white placeholder:text-slate-500 focus:ring-blue-500/50';
-}
-
 function validateUserForm(form) {
   const nombre = form.nombre.trim();
-  const email = form.email.trim();
-
-  if (!nombre || !email) {
-    return 'Nombre y correo son obligatorios.';
-  }
-
-  if (!FULL_NAME_REGEX.test(nombre)) {
-    return 'El nombre debe iniciar con mayúscula, tener palabras separadas por un solo espacio y no incluir números.';
-  }
-
-  if (!EMAIL_REGEX.test(email)) {
-    return 'Debes ingresar un correo electrónico válido.';
-  }
-
+  const email  = form.email.trim();
+  if (!nombre || !email) return 'Nombre y correo son obligatorios.';
+  if (!FULL_NAME_REGEX.test(nombre)) return 'El nombre debe iniciar con mayúscula, sin números y con palabras separadas por espacio.';
+  if (!EMAIL_REGEX.test(email))      return 'Debes ingresar un correo electrónico válido.';
   return '';
 }
 
-function UsersToolbar({ isLight, mutedClass, filteredCount, totalCount, roleFilter, setRoleFilter, onOpenCreate }) {
-  const roleSelectClass = isLight
-    ? 'bg-sky-50/70 border-sky-100 text-slate-900 focus:ring-sky-500/25'
-    : 'bg-slate-900/70 border-slate-700 text-white focus:ring-sky-400/30';
+/* ── Role Badge ── */
+function RoleBadge({ rol, isLight }) {
+  if (rol === 'admin') {
+    return (
+      <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide
+        ${isLight ? 'bg-blue-50 text-blue-700 border border-blue-200/80' : 'bg-blue-500/10 text-blue-400 border border-blue-500/20'}`}>
+        <ShieldCheck size={11} strokeWidth={2.2} /> Admin
+      </span>
+    );
+  }
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide
+      ${isLight ? 'bg-slate-100 text-slate-600 border border-slate-200' : 'bg-slate-800 text-slate-400 border border-slate-700'}`}>
+      <UserIcon size={11} strokeWidth={2.2} /> Cliente
+    </span>
+  );
+}
+
+/* ── Skeleton ── */
+function SkeletonRows({ isLight }) {
+  return Array.from({ length: 5 }).map((_, i) => (
+    <tr key={i} className={isLight ? 'border-b border-slate-100' : 'border-b border-slate-800'}>
+      {[140, 180, 200, 80, 80].map((w, j) => (
+        <td key={j} className="p-4">
+          <div className="skeleton h-4 rounded" style={{ width: w }} />
+        </td>
+      ))}
+    </tr>
+  ));
+}
+
+/* ── Toolbar ── */
+function UsersToolbar({ isLight, filteredCount, totalCount, roleFilter, setRoleFilter, search, setSearch, onOpenCreate }) {
+  const inp = isLight
+    ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-blue-500/20 focus:border-blue-300'
+    : 'bg-slate-900/60 border-slate-700 text-white placeholder:text-slate-500 focus:ring-blue-500/20 focus:border-blue-500/40';
 
   return (
-    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h2 className={`text-2xl font-bold flex items-center gap-2 ${isLight ? 'text-slate-900' : 'text-white'}`}>
-          <UserPlusIcon className={isLight ? 'h-6 w-6 text-sky-700' : 'h-6 w-6 text-sky-300'} />
-          Gestión de Usuarios
-        </h2>
-        <p className={`text-sm mt-1 ${mutedClass}`}>{filteredCount} usuario(s) visible(s) de {totalCount} registrado(s)</p>
+        <div className="flex items-center gap-2">
+          <Users size={20} className={isLight ? 'text-blue-600' : 'text-blue-400'} strokeWidth={1.8} />
+          <h2 className={`text-xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>Gestión de Usuarios</h2>
+        </div>
+        <p className={`mt-0.5 text-sm ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
+          {filteredCount} de {totalCount} usuarios
+        </p>
       </div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+      <div className="flex flex-col gap-2 sm:flex-row">
+        {/* Search */}
         <div className="relative">
-          <FunnelIcon className={`pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${isLight ? 'text-sky-700' : 'text-slate-400'}`} />
+          <Search size={15} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Buscar usuario..."
+            className={`rounded-xl border py-2.5 pl-9 pr-4 text-sm outline-none transition-all focus:ring-2 w-full sm:w-48 ${inp}`}
+          />
+        </div>
+        {/* Role filter */}
+        <div className="relative">
+          <Filter size={14} className={`absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${isLight ? 'text-slate-400' : 'text-slate-500'}`} />
           <select
             value={roleFilter}
-            onChange={(event) => setRoleFilter(event.target.value)}
-            className={`rounded-xl border py-2.5 pl-9 pr-4 text-sm outline-none transition-all focus:ring-4 ${roleSelectClass}`}
+            onChange={e => setRoleFilter(e.target.value)}
+            className={`rounded-xl border py-2.5 pl-8 pr-4 text-sm outline-none transition-all focus:ring-2 ${inp}`}
           >
-            <option value="all">Todos los roles</option>
+            <option value="all">Todos</option>
             <option value="admin">Admin</option>
             <option value="cliente">Cliente</option>
           </select>
         </div>
+        {/* Add */}
         <button
           onClick={onOpenCreate}
-          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-blue-500 px-5 py-2.5 text-white shadow-lg shadow-sky-500/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-sky-500/30"
+          id="btn-nuevo-usuario"
+          className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5 hover:shadow-xl hover:shadow-blue-500/30 active:translate-y-0"
         >
-          <UserPlusIcon className="h-5 w-5" /> Nuevo Usuario
+          <UserIcon size={15} strokeWidth={2.2} /> Nuevo Usuario
         </button>
       </div>
     </div>
   );
 }
 
-function UsersTable({ isLight, loading, mutedClass, tableHeaderClass, rowHoverClass, filteredUsuarios, onOpenEdit, onDelete }) {
-  const shellClass = isLight ? 'bg-gradient-to-br from-sky-50 via-white to-cyan-50 border-sky-100' : 'bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700';
+/* ── Table ── */
+function UsersTable({ isLight, loading, filteredUsuarios, onOpenEdit, onDelete }) {
+  const surface = isLight
+    ? 'bg-white border-slate-200/80 shadow-card'
+    : 'bg-slate-900/60 border-slate-800 shadow-glass-dark';
+  const headerBg = isLight ? 'bg-slate-50 text-slate-500' : 'bg-slate-900/80 text-slate-500';
+  const rowHover = isLight ? 'hover:bg-blue-50/50' : 'hover:bg-slate-800/50';
+  const divider  = isLight ? 'divide-slate-100' : 'divide-slate-800/80';
 
   return (
-    <div className={`rounded-3xl border overflow-hidden shadow-sm ${shellClass}`}>
-      {loading ? (
-        <div className={`p-8 text-center ${mutedClass}`}>Cargando usuarios...</div>
-      ) : (
-        <div className="dashboard-table-shell">
-          <table className="w-full text-left">
-            <thead className={`text-sm ${tableHeaderClass}`}>
-              <tr>
-                <th className="p-4 font-medium">ID</th>
-                <th className="p-4 font-medium">Nombre</th>
-                <th className="p-4 font-medium">Email</th>
-                <th className="p-4 font-medium">Rol</th>
-                <th className="p-4 font-medium text-right">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className={isLight ? 'divide-y divide-slate-200' : 'divide-y divide-slate-700/50'}>
-              {filteredUsuarios.map((user) => (
-                <tr key={user.id} className={`${rowHoverClass} transition-colors`}>
-                  <td className={`p-4 text-xs truncate max-w-[120px] font-mono ${mutedClass}`}>{user.id}</td>
-                  <td className={isLight ? 'p-4 text-slate-900' : 'p-4 text-white'}>
-                    <div className="flex items-center gap-2">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-sky-500/15 text-sky-500">
-                        <UserCircleIcon className="h-4 w-4" />
+    <div className={`overflow-hidden rounded-2xl border ${surface}`}>
+      <div className="dashboard-table-shell">
+        <table className="w-full text-left">
+          <thead className={`text-xs font-semibold uppercase tracking-wider ${headerBg}`}>
+            <tr>
+              <th className="px-5 py-3.5">ID</th>
+              <th className="px-5 py-3.5">Nombre</th>
+              <th className="px-5 py-3.5">Email</th>
+              <th className="px-5 py-3.5">Rol</th>
+              <th className="px-5 py-3.5 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody className={`divide-y ${divider}`}>
+            {loading
+              ? <SkeletonRows isLight={isLight} />
+              : filteredUsuarios.map(user => (
+                <tr key={user.id} className={`transition-colors ${rowHover}`}>
+                  <td className={`px-5 py-4 text-xs font-mono max-w-[110px] truncate ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {user.id}
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-xs font-bold
+                        ${isLight ? 'bg-blue-50 text-blue-600' : 'bg-blue-500/10 text-blue-400'}`}>
+                        {(user.nombre || '?').slice(0, 2).toUpperCase()}
                       </div>
-                      {user.nombre || <span className="italic text-slate-500">Sin nombre</span>}
+                      <span className={`font-medium text-sm ${isLight ? 'text-slate-900' : 'text-white'}`}>
+                        {user.nombre || <span className="italic text-slate-400">Sin nombre</span>}
+                      </span>
                     </div>
                   </td>
-                  <td className={`p-4 ${isLight ? 'text-slate-600' : 'text-slate-300'}`}>{user.email}</td>
-                  <td className="p-4">
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium uppercase tracking-wider ${getRoleBadgeClass(isLight, user.rol)}`}>
-                      {user.rol}
-                    </span>
-                  </td>
-                  <td className="p-4 text-right space-x-2">
-                    <button
-                      onClick={() => onOpenEdit(user)}
-                      className="text-sky-500 hover:bg-sky-500/10 p-2 rounded-lg transition-colors inline-flex"
-                      title="Editar"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      onClick={() => onDelete(user.id)}
-                      className="text-red-400 hover:bg-red-500/10 p-2 rounded-lg transition-colors inline-flex"
-                      title="Eliminar"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                  <td className={`px-5 py-4 text-sm ${isLight ? 'text-slate-500' : 'text-slate-400'}`}>{user.email}</td>
+                  <td className="px-5 py-4"><RoleBadge rol={user.rol} isLight={isLight} /></td>
+                  <td className="px-5 py-4 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        onClick={() => onOpenEdit(user)}
+                        title="Editar"
+                        className={`p-2 rounded-lg transition-colors
+                          ${isLight ? 'text-slate-400 hover:bg-blue-50 hover:text-blue-600' : 'text-slate-500 hover:bg-blue-500/10 hover:text-blue-400'}`}
+                      >
+                        <Pencil size={15} strokeWidth={1.8} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(user.id)}
+                        title="Eliminar"
+                        className={`p-2 rounded-lg transition-colors
+                          ${isLight ? 'text-slate-400 hover:bg-red-50 hover:text-red-500' : 'text-slate-500 hover:bg-red-500/10 hover:text-red-400'}`}
+                      >
+                        <Trash2 size={15} strokeWidth={1.8} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+              ))
+            }
+          </tbody>
+        </table>
+        {!loading && filteredUsuarios.length === 0 && (
+          <div className={`py-16 text-center ${isLight ? 'text-slate-400' : 'text-slate-600'}`}>
+            <Users size={40} className="mx-auto mb-3 opacity-30" />
+            <p className="text-sm font-medium">Sin resultados para ese filtro</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function UsersModal({ isLight, mutedClass, modalOpen, editingUser, error, onClose, onSave, saving, form, setForm, inputClass }) {
+/* ── Modal ── */
+function UsersModal({ isLight, modalOpen, editingUser, error, onClose, onSave, saving, form, setForm }) {
   if (!modalOpen) return null;
-  if (typeof document === 'undefined') return null;
-  const portalTarget = document.body;
 
-  const roleSelectClass = isLight
-    ? 'bg-white border-slate-200 text-slate-900 focus:ring-sky-500/25'
-    : 'bg-slate-900/70 border-slate-700 text-white focus:ring-sky-400/30';
-  const modalButtonNeutralClass = isLight
-    ? 'border-slate-200 text-slate-700 hover:bg-slate-50'
-    : 'border-slate-700 text-slate-300 hover:bg-slate-800';
+  const inp = isLight
+    ? 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:ring-blue-500/20 focus:border-blue-400'
+    : 'bg-slate-800/60 border-slate-700 text-white placeholder:text-slate-500 focus:ring-blue-500/20 focus:border-blue-500/40';
 
-  const modalContent = (
-    <div className="fixed inset-0 z-[200]">
+  const modal = (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <button
         type="button"
-        aria-label="Cerrar formulario"
-        className="absolute inset-0 bg-black/60 backdrop-blur-[2px]"
+        aria-label="Cerrar"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
-      <div className="relative z-[81] h-full overflow-y-auto p-6">
-        <div
-          className={`mx-auto my-6 overflow-hidden rounded-[24px] border shadow-[0_36px_120px_rgba(2,6,23,0.45)] ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-700'}`}
-          style={{ width: 'min(760px, 92vw)' }}
-        >
-          <div className={`h-2 ${isLight ? 'bg-gradient-to-r from-sky-400 via-blue-500 to-indigo-500' : 'bg-gradient-to-r from-sky-500 via-blue-400 to-indigo-400'}`} />
-          <div className="flex items-start justify-between gap-4 border-b border-white/5 px-6 pt-6 pb-5">
+      <div
+        className={`relative z-10 w-full max-w-lg overflow-hidden rounded-2xl border shadow-2xl animate-scale-in
+          ${isLight ? 'bg-white border-slate-200' : 'bg-slate-900 border-slate-800'}`}
+      >
+        {/* Accent bar */}
+        <div className="h-1 bg-gradient-to-r from-blue-500 via-indigo-500 to-violet-500" />
+
+        {/* Header */}
+        <div className={`flex items-center justify-between px-6 py-5 border-b ${isLight ? 'border-slate-100' : 'border-slate-800'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl
+              ${isLight ? 'bg-blue-50 text-blue-600' : 'bg-blue-500/15 text-blue-400'}`}>
+              {editingUser ? <Pencil size={18} strokeWidth={1.8} /> : <UserIcon size={18} strokeWidth={1.8} />}
+            </div>
             <div>
-              <p className={`text-xs uppercase tracking-[0.28em] ${mutedClass}`}>Formulario</p>
-              <h3 className={`mt-2 flex items-center gap-2 text-2xl font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
-                <ShieldCheckIcon className={isLight ? 'h-6 w-6 text-sky-700' : 'h-6 w-6 text-sky-300'} />
+              <h3 className={`text-lg font-black ${isLight ? 'text-slate-900' : 'text-white'}`}>
                 {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
               </h3>
-              <p className={`mt-2 text-sm leading-6 ${mutedClass}`}>Completa los datos y guarda el registro con una vista más cómoda.</p>
-            </div>
-            <button onClick={onClose} className={`rounded-full border p-2 transition-colors ${isLight ? 'border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-slate-900' : 'border-slate-700 text-slate-400 hover:bg-slate-800 hover:text-white'}`}>
-              <X size={18} />
-            </button>
-          </div>
-
-          {error && (
-            <div className="mx-6 mt-5 rounded-2xl border border-red-500/25 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-5 px-6 py-6">
-            <div className="space-y-2">
-              <label htmlFor="usuario-nombre" className={`text-sm block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Nombre completo</label>
-              <input
-                id="usuario-nombre"
-                type="text"
-                value={form.nombre}
-                onChange={(event) => setForm({ ...form, nombre: event.target.value })}
-                className={`w-full rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 transition-all ${inputClass}`}
-                placeholder="Alex Maguert"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="usuario-email" className={`text-sm flex items-center gap-1.5 ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>
-                <EnvelopeIcon className="h-4 w-4" />
-                Correo electrónico
-              </label>
-              <input
-                id="usuario-email"
-                type="email"
-                value={form.email}
-                onChange={(event) => setForm({ ...form, email: event.target.value })}
-                disabled={!!editingUser}
-                className={`w-full rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 transition-all disabled:opacity-50 disabled:cursor-not-allowed ${inputClass}`}
-                placeholder="usuario@techstore.com"
-              />
-              {editingUser && <p className={`text-xs mt-1 ${mutedClass}`}>El email no se puede modificar.</p>}
-            </div>
-
-            <div className="space-y-2">
-              <label htmlFor="usuario-rol" className={`text-sm block ${isLight ? 'text-slate-600' : 'text-slate-400'}`}>Rol</label>
-              <select
-                id="usuario-rol"
-                value={form.rol}
-                onChange={(event) => setForm({ ...form, rol: event.target.value })}
-                className={`w-full rounded-2xl px-4 py-3 focus:outline-none focus:ring-2 transition-all ${roleSelectClass}`}
-              >
-                {ROLES.map((role) => (
-                  <option key={role} value={role}>{role.charAt(0).toUpperCase() + role.slice(1)}</option>
-                ))}
-              </select>
+              <p className={`text-xs ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>
+                Completa los datos del formulario
+              </p>
             </div>
           </div>
+          <button onClick={onClose}
+            className={`rounded-lg p-2 transition-colors ${isLight ? 'hover:bg-slate-100 text-slate-500' : 'hover:bg-slate-800 text-slate-400'}`}>
+            <X size={18} strokeWidth={1.8} />
+          </button>
+        </div>
 
-          <div className={`flex gap-3 border-t px-6 py-5 ${isLight ? 'border-slate-200' : 'border-slate-700'}`}>
-            <button
-              onClick={onClose}
-              className={`flex-1 rounded-full border px-4 py-3 font-semibold transition-colors ${modalButtonNeutralClass}`}
+        {/* Error */}
+        {error && (
+          <div className="mx-6 mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 dark:border-red-500/20 dark:bg-red-500/10 dark:text-red-400">
+            {error}
+          </div>
+        )}
+
+        {/* Body */}
+        <div className="space-y-4 px-6 py-5">
+          <div className="space-y-1.5">
+            <label className={`text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Nombre completo</label>
+            <input
+              id="usuario-nombre"
+              type="text"
+              value={form.nombre}
+              onChange={e => setForm({ ...form, nombre: e.target.value })}
+              placeholder="María García"
+              className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 ${inp}`}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <label className={`text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Correo electrónico</label>
+            <input
+              id="usuario-email"
+              type="email"
+              value={form.email}
+              onChange={e => setForm({ ...form, email: e.target.value })}
+              disabled={!!editingUser}
+              placeholder="usuario@techstore.com"
+              className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 disabled:opacity-50 disabled:cursor-not-allowed ${inp}`}
+            />
+            {editingUser && <p className={`text-xs ${isLight ? 'text-slate-400' : 'text-slate-500'}`}>El email no se puede modificar.</p>}
+          </div>
+          <div className="space-y-1.5">
+            <label className={`text-sm font-semibold ${isLight ? 'text-slate-700' : 'text-slate-300'}`}>Rol</label>
+            <select
+              id="usuario-rol"
+              value={form.rol}
+              onChange={e => setForm({ ...form, rol: e.target.value })}
+              className={`w-full rounded-xl border px-4 py-2.5 text-sm outline-none transition-all focus:ring-2 ${inp}`}
             >
-              Cancelar
-            </button>
-            <button
-              onClick={onSave}
-              disabled={saving}
-              className="flex-1 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-sky-500 to-blue-500 px-4 py-3 font-semibold text-white transition-all hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
-            >
-              <Save size={16} />
-              {saving ? 'Guardando...' : 'Guardar'}
-            </button>
+              {ROLES.map(r => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+            </select>
           </div>
+        </div>
+
+        {/* Footer */}
+        <div className={`flex gap-3 border-t px-6 py-4 ${isLight ? 'border-slate-100 bg-slate-50' : 'border-slate-800 bg-slate-900/50'}`}>
+          <button
+            onClick={onClose}
+            className={`flex-1 rounded-xl border py-2.5 text-sm font-semibold transition-colors
+              ${isLight ? 'border-slate-200 text-slate-600 hover:bg-slate-100' : 'border-slate-700 text-slate-400 hover:bg-slate-800'}`}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={onSave}
+            disabled={saving}
+            id="btn-guardar-usuario"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/25 transition-all hover:-translate-y-0.5 disabled:translate-y-0 disabled:opacity-60"
+          >
+            <Save size={15} strokeWidth={2} />
+            {saving ? 'Guardando...' : 'Guardar cambios'}
+          </button>
         </div>
       </div>
     </div>
   );
 
-  return createPortal(modalContent, portalTarget);
+  return createPortal(modal, document.body);
 }
 
+/* ── Main Page ── */
 export default function Usuarios() {
   const { isLight } = useTheme();
-  const [usuarios, setUsuarios] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [editingUser, setEditingUser] = useState(null); // null = crear, obj = editar
-  const [form, setForm] = useState(emptyForm);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
+  const [usuarios,   setUsuarios]   = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [modalOpen,  setModalOpen]  = useState(false);
+  const [editingUser,setEditingUser]= useState(null);
+  const [form,       setForm]       = useState(emptyForm);
+  const [saving,     setSaving]     = useState(false);
+  const [error,      setError]      = useState('');
   const [roleFilter, setRoleFilter] = useState('all');
+  const [search,     setSearch]     = useState('');
 
   async function fetchUsuarios() {
     try {
       const res = await api.get('/usuarios');
       setUsuarios(res.data);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+    } catch (err) { console.error(err); }
+    finally { setLoading(false); }
   }
 
   useEffect(() => { fetchUsuarios(); }, []);
 
-  const filteredUsuarios = useMemo(() => getFilteredUsuarios(usuarios, roleFilter), [usuarios, roleFilter]);
+  const filteredUsuarios = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    return usuarios
+      .filter(u => roleFilter === 'all' || u.rol === roleFilter)
+      .filter(u => !q || u.nombre?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q));
+  }, [usuarios, roleFilter, search]);
 
-  const shellClass = isLight ? 'text-slate-900' : 'text-slate-100';
-  const mutedClass = isLight ? 'text-slate-600' : 'text-slate-400';
-  const tableHeaderClass = isLight ? 'bg-sky-100/70 text-sky-900' : 'bg-slate-900/50 text-slate-400';
-  const rowHoverClass = isLight ? 'hover:bg-sky-50/80' : 'hover:bg-slate-700/25';
-  const inputClass = getInputClass(isLight);
-
-  function openCreate() {
-    setEditingUser(null);
-    setForm(emptyForm);
-    setError('');
-    setModalOpen(true);
-  }
-
-  function openEdit(u) {
-    setEditingUser(u);
-    setForm({ nombre: u.nombre || '', email: u.email, rol: u.rol, password: '' });
-    setError('');
-    setModalOpen(true);
-  }
-
-  function closeModal() {
-    setModalOpen(false);
-    setEditingUser(null);
-    setForm(emptyForm);
-    setError('');
-  }
+  function openCreate() { setEditingUser(null); setForm(emptyForm); setError(''); setModalOpen(true); }
+  function openEdit(u)  { setEditingUser(u); setForm({ nombre: u.nombre||'', email: u.email, rol: u.rol, password: '' }); setError(''); setModalOpen(true); }
+  function closeModal() { setModalOpen(false); setEditingUser(null); setForm(emptyForm); setError(''); }
 
   async function handleSave() {
-    const validationError = validateUserForm(form);
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
-    setSaving(true);
-    setError('');
+    const err = validateUserForm(form);
+    if (err) { setError(err); return; }
+    setSaving(true); setError('');
     try {
-      const payload = {
-        nombre: form.nombre.trim(),
-        email: form.email.trim(),
-        rol: form.rol,
-      };
-
+      const payload = { nombre: form.nombre.trim(), email: form.email.trim(), rol: form.rol };
       if (editingUser) {
-        // EDITAR — solo actualizamos los campos (no el id)
-        await api.post('/usuarios', {
-          id: editingUser.id,
-          ...payload,
-        });
+        await api.post('/usuarios', { id: editingUser.id, ...payload });
       } else {
-        // CREAR — necesitamos un ID único (usamos timestamp como stub)
-        const newId = `manual-${Date.now()}`;
-        await api.post('/usuarios', {
-          id: newId,
-          ...payload,
-        });
+        await api.post('/usuarios', { id: `manual-${Date.now()}`, ...payload });
       }
-      closeModal();
-      fetchUsuarios();
+      closeModal(); fetchUsuarios();
     } catch (err) {
       setError(err.response?.data?.error || 'Error al guardar el usuario.');
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   }
 
   async function handleDelete(id) {
-    if (globalThis.confirm('¿Seguro de eliminar este usuario? Esta acción no se puede deshacer.')) {
-      try {
-        await api.delete(`/usuarios/${id}`);
-        fetchUsuarios();
-      } catch (err) {
-        alert('Error al eliminar: ' + (err.response?.data?.error || err.message));
-      }
+    if (globalThis.confirm('¿Eliminar este usuario? Esta acción no se puede deshacer.')) {
+      try { await api.delete(`/usuarios/${id}`); fetchUsuarios(); }
+      catch (err) { alert('Error al eliminar: ' + (err.response?.data?.error || err.message)); }
     }
   }
 
   return (
-    <div className={`space-y-6 ${shellClass}`}>
+    <div className="space-y-5 animate-slide-up">
       <UsersToolbar
         isLight={isLight}
-        mutedClass={mutedClass}
         filteredCount={filteredUsuarios.length}
         totalCount={usuarios.length}
         roleFilter={roleFilter}
         setRoleFilter={setRoleFilter}
+        search={search}
+        setSearch={setSearch}
         onOpenCreate={openCreate}
       />
-
+      <UsersTable
+        isLight={isLight}
+        loading={loading}
+        filteredUsuarios={filteredUsuarios}
+        onOpenEdit={openEdit}
+        onDelete={handleDelete}
+      />
       <UsersModal
         isLight={isLight}
-        mutedClass={mutedClass}
         modalOpen={modalOpen}
         editingUser={editingUser}
         error={error}
@@ -391,18 +388,6 @@ export default function Usuarios() {
         saving={saving}
         form={form}
         setForm={setForm}
-        inputClass={inputClass}
-      />
-
-      <UsersTable
-        isLight={isLight}
-        loading={loading}
-        mutedClass={mutedClass}
-        tableHeaderClass={tableHeaderClass}
-        rowHoverClass={rowHoverClass}
-        filteredUsuarios={filteredUsuarios}
-        onOpenEdit={openEdit}
-        onDelete={handleDelete}
       />
     </div>
   );
